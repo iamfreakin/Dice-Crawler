@@ -32,7 +32,8 @@ func start_battle(enemy_defs: Array[EnemyData]) -> void:
 	_draw_pile = GameManager.dice_pool.duplicate()
 	_draw_pile.shuffle()
 	_discard_pile.clear()
-	GameManager.grant_reroll_tokens(1)  # 스테이지당 기본 1개 (유물로 보정 가능)
+	# 스테이지당 기본 1개 + 유물 보정
+	GameManager.grant_reroll_tokens(1 + GameManager.relic_value(RelicData.Effect.EXTRA_REROLL))
 	_change_state(State.DRAW)
 
 func _change_state(new_state: State) -> void:
@@ -50,7 +51,8 @@ func _change_state(new_state: State) -> void:
 
 # --- DRAW ---------------------------------------------------------------
 func _do_draw() -> void:
-	player_block = 0  # 방어는 다음 내 턴 시작 시 소멸
+	# 방어는 매 턴 초기화. 유물(매 턴 방어)이 있으면 그만큼 시작 방어 부여.
+	player_block = GameManager.relic_value(RelicData.Effect.BLOCK_PER_TURN)
 	_hand.clear()
 	_roll_results.clear()
 	for i in HAND_SIZE:
@@ -144,6 +146,7 @@ func _do_resolve() -> void:
 	# 적에게 효과/데미지 적용 (취약은 take_damage 내부에서 반영)
 	if target != null:
 		if burn_to_apply > 0:
+			burn_to_apply += GameManager.relic_value(RelicData.Effect.BURN_BOOST)
 			target.apply_burn(burn_to_apply)
 			log_message.emit("🔥 %s 에게 화상 +%d" % [target.data.display_name, burn_to_apply])
 		if damage > 0:

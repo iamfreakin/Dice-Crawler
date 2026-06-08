@@ -17,7 +17,7 @@ var current_floor: int = 0
 ## 주사위 풀(덱). 전투 시 여기서 드로우한다.
 var dice_pool: Array[DiceData] = []
 ## 보유 유물.
-var relics: Array[Resource] = []
+var relics: Array[RelicData] = []
 
 ## 스테이지당 리롤 토큰 (미사용 시 소멸, 이월 없음).
 var reroll_tokens: int = 0
@@ -66,6 +66,29 @@ func move_to(node: MapNode) -> void:
 
 func is_at_boss() -> bool:
 	return current_node != null and current_node.type == MapNode.Type.BOSS
+
+# --- 유물 ---------------------------------------------------------------
+## 유물 획득. 즉시 효과(최대 HP 증가 등)는 여기서 적용.
+func add_relic(relic: RelicData) -> void:
+	relics.append(relic)
+	if relic.effect == RelicData.Effect.MAX_HP_UP:
+		max_hp += relic.value
+		current_hp += relic.value
+		hp_changed.emit(current_hp, max_hp)
+
+func has_relic(relic_id: StringName) -> bool:
+	for r in relics:
+		if r.id == relic_id:
+			return true
+	return false
+
+## 특정 효과를 가진 유물들의 value 합 (전투 훅에서 사용).
+func relic_value(effect: RelicData.Effect) -> int:
+	var total: int = 0
+	for r in relics:
+		if r.effect == effect:
+			total += r.value
+	return total
 
 ## 시작 덱: 기본 주사위 3종 구성.
 func _grant_starting_dice() -> void:

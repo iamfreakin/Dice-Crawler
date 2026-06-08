@@ -44,8 +44,12 @@ func _render() -> void:
 	for child in _rows_box.get_children():
 		child.queue_free()
 
-	_status_label.text = "HP: %d/%d   |   층: %d" % [
-		GameManager.current_hp, GameManager.max_hp, GameManager.current_floor
+	var relic_names: Array[String] = []
+	for r in GameManager.relics:
+		relic_names.append(r.display_name)
+	var relic_part := ("   |   유물: " + ", ".join(relic_names)) if not relic_names.is_empty() else ""
+	_status_label.text = "HP: %d/%d   |   층: %d%s" % [
+		GameManager.current_hp, GameManager.max_hp, GameManager.current_floor, relic_part
 	]
 
 	var available := GameManager.get_available_nodes()
