@@ -1,0 +1,80 @@
+# Dice Crawler — 에이전트 작업 가이드 (정본)
+
+> 이 문서는 **Claude Code와 Codex 공용 규칙**이다. 두 에이전트는 역할 구분 없이
+> 아래 컨벤션과 구조 규칙을 동일하게 따른다. (`AGENTS.md`는 이 문서를 가리킨다.)
+> 게임 기획 전체는 [docs/design.md](docs/design.md) 참조.
+
+## 프로젝트 한 줄 요약
+
+Godot 4.6 + GDScript로 만드는 **턴제 주사위 로그라이크** (Slay the Spire 구조 + 주사위 빌드업). PC / itch.io 우선 출시.
+
+## 기술 스택 & 핵심 아키텍처
+
+- **엔진/언어**: Godot 4.6, GDScript (정적 타입 권장)
+- **렌더링**: GL Compatibility (project.godot 설정 유지)
+- **전역 상태**: `GameManager` Autoload 가 런(run) 상태를 전역 관리
+  (현재 층, HP, 주사위 풀/덱, 리롤 토큰, 보유 유물)
+- **데이터는 Resource로**: `DiceData` / `EnemyData` / `IntentData` / `RelicData`
+  를 `Resource` 서브클래스로 정의하고 `.tres` 인스턴스로 콘텐츠를 추가한다.
+  (코드 수정 없이 데이터만 추가해 콘텐츠 확장)
+- **전투는 상태머신**: `BattleManager` 가 명시적 상태머신으로 동작
+  `DRAW → PLAYER_TURN → RESOLVE → ENEMY_TURN → REWARD`
+
+## 디렉터리 구조 (이 규칙을 지켜서 파일 배치)
+
+```
+res://
+├── project.godot
+├── scenes/              # 최상위 씬: Battle, Map, Reward, MainMenu (.tscn)
+├── scripts/
+│   ├── autoload/        # GameManager.gd 등 Autoload 싱글톤
+│   ├── battle/          # BattleManager + 전투 로직
+│   ├── map/             # 노드 맵 생성/이동
+│   └── data/            # Resource 클래스 정의 (DiceData.gd 등)
+├── resources/
+│   ├── dice/            # 주사위 .tres
+│   ├── enemies/         # 적 .tres
+│   ├── intents/         # 의도 .tres
+│   └── relics/          # 유물 .tres
+├── assets/              # sprites / audio / fonts
+├── ui/                  # 재사용 UI 씬·스크립트
+└── docs/                # design.md 등 기획 문서
+```
+
+- 스크립트는 `scripts/` 아래 도메인 폴더에, 데이터 인스턴스(.tres)는 `resources/` 아래에 둔다.
+- 씬(.tscn)에 붙는 스크립트는 같은 의미의 `scripts/<도메인>/` 폴더에 둔다.
+
+## 코딩 컨벤션 (두 에이전트 공통 — 반드시 준수)
+
+- **명명**
+  - 파일: 스크립트/씬은 `PascalCase` (예: `BattleManager.gd`, `Battle.tscn`),
+    리소스 인스턴스는 `snake_case` (예: `goblin_grunt.tres`)
+  - 클래스: `class_name PascalCase`
+  - 함수·변수: `snake_case`, 상수: `CONSTANT_CASE`
+  - private 의도 멤버: 앞에 `_` (예: `_current_state`)
+  - 시그널: 과거형 동사 (예: `dice_rolled`, `turn_ended`)
+- **타입**: 가능한 한 정적 타입 명시 (`var hp: int`, `func roll() -> int:`)
+- **Autoload 접근**: 전역 상태는 `GameManager.xxx` 로 접근. 씬 간 직접 참조 대신 시그널/매니저 경유.
+- **enum**으로 상태·속성 표현 (예: `enum State { DRAW, PLAYER_TURN, ... }`,
+  `enum Element { FIRE, ICE, LIGHTNING, ... }`)
+- **주석/문서**: 한국어 주석 OK. 복잡한 규칙(시너지, 의도 결정)엔 의도를 설명하는 주석을 단다.
+- 한 파일에 한 책임. 매니저는 로직, 씬 스크립트는 표현/입력에 집중.
+
+## 작업 규칙 (에이전트 협업)
+
+- **`.tscn`/`.tres` 충돌 주의**: 두 에이전트가 같은 씬 파일을 동시에 편집하면
+  Godot 씬은 텍스트 머지가 어렵다. 작업 시작 전 어떤 씬/스크립트를 만질지 분리한다.
+- 새 콘텐츠(주사위/적/유물)는 **Resource 클래스 추가가 아니라 `.tres` 추가**로 해결되는지 먼저 확인.
+- 새 Autoload·입력맵·프로젝트 설정 변경은 `project.godot` 를 건드리므로 커밋 메시지에 명시.
+- 커밋은 의미 단위로. 기능 추가 시 관련 씬+스크립트+리소스를 함께 커밋.
+
+## 현재 상태
+
+- [x] Godot 4.6 프로젝트 초기화 (project.godot, icon)
+- [x] 폴더 구조 / 에이전트 문서 / .gitignore(Godot용) 세팅
+- [x] GameManager Autoload 골격 (+ project.godot 등록)
+- [x] Resource 클래스 정의 (DiceData / FaceData / EnemyData / IntentData)
+- [x] BattleManager 상태머신 골격
+- [ ] 씬 골격 (MainMenu / Map / Battle / Reward)
+- [ ] 기본 주사위 3종 .tres + 시작 덱 연결 (`_grant_starting_dice`)
+- [ ] RESOLVE/ENEMY_TURN/시너지 TODO 구현, 적 HP 인스턴스 도입
