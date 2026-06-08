@@ -31,10 +31,9 @@ func start_new_run() -> void:
 	_grant_starting_dice()
 	run_started.emit()
 
-## 시작 덱: 기본 주사위 3종 구성 (실제 .tres 로드는 콘텐츠 작업 시 연결).
+## 시작 덱: 기본 주사위 3종 구성.
 func _grant_starting_dice() -> void:
-	# TODO: res://resources/dice/ 의 기본 주사위 .tres 를 로드해 채운다.
-	pass
+	dice_pool = StarterDeck.build()
 
 func take_damage(amount: int) -> void:
 	current_hp = max(0, current_hp - amount)

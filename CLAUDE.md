@@ -75,6 +75,15 @@ res://
 - [x] GameManager Autoload 골격 (+ project.godot 등록)
 - [x] Resource 클래스 정의 (DiceData / FaceData / EnemyData / IntentData)
 - [x] BattleManager 상태머신 골격
-- [ ] 씬 골격 (MainMenu / Map / Battle / Reward)
-- [ ] 기본 주사위 3종 .tres + 시작 덱 연결 (`_grant_starting_dice`)
-- [ ] RESOLVE/ENEMY_TURN/시너지 TODO 구현, 적 HP 인스턴스 도입
+- [x] 2D 확정 (project.godot 정리, 1280x720)
+- [x] 기본 주사위 3종 (StarterDeck 코드 팩토리) + 시작 덱 연결
+- [x] 실행 검증용 Main 씬 (F5 → 주사위 굴림 데모)
+- [x] 플레이 가능한 1:1 전투 (Battle.tscn = main_scene)
+      - EnemyInstance 런타임 HP/방어, EnemyFactory(고블린)
+      - RESOLVE: 데미지/방어/속성 시너지 처리
+      - ENEMY_TURN: 의도(IntentData) 실행, 의도 공개 표시
+      - 리롤 토큰 사용, 승/패 판정
+- [ ] StarterDeck/EnemyFactory → res://resources/*.tres 이관
+- [ ] 다중 적 + 타겟 선택, 시너지 다양화 (❄️ 빙결/⚡ 감전 등)
+- [ ] 노드 맵 (Map.tscn) + 화면 전환 라우터 + 보상(Reward.tscn)
+- [ ] MainMenu.tscn

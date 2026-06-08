@@ -2,31 +2,34 @@ class_name BattleManager
 extends Node
 ## 전투 흐름을 명시적 상태머신으로 제어한다.
 ## DRAW → PLAYER_TURN → RESOLVE → ENEMY_TURN → REWARD
-## 씬(Battle.tscn) 표현/입력은 시그널을 구독해 반응한다.
+## 표현/입력(BattleScreen)은 시그널을 구독해 반응한다.
 
 signal state_changed(new_state: State)
-signal hand_drawn(hand: Array)        ## 드로우된 핸드 (DiceData 배열)
-signal dice_rolled(results: Array)    ## 굴림 결과 (FaceData 배열)
-signal turn_resolved
+signal hand_drawn(hand: Array)          ## 드로우된 핸드 (DiceData 배열)
+signal dice_rolled(results: Array)      ## 굴림 결과 [{die, face}, ...]
+signal log_message(text: String)        ## 화면 로그용 메시지
 signal battle_ended(victory: bool)
 
 enum State { DRAW, PLAYER_TURN, RESOLVE, ENEMY_TURN, REWARD }
 
 const HAND_SIZE: int = 2  ## 핸드에서 선택해 굴리는 주사위 수
+const SYNERGY_BONUS: int = 3  ## 같은 속성 2개 이상 시너지 추가 데미지
 
 var _state: State = State.DRAW
-var _enemies: Array[EnemyData] = []
+var _enemies: Array[EnemyInstance] = []
+var player_block: int = 0
 
-## 드로우 풀/버린 더미 (StS 카드 구조와 동일: 풀 소진 시 셔플 후 재드로우).
+## 드로우 풀/버린 더미 (StS 카드 구조: 풀 소진 시 셔플 후 재드로우).
 var _draw_pile: Array[DiceData] = []
 var _discard_pile: Array[DiceData] = []
 var _hand: Array[DiceData] = []
-## 이번 턴 선택해 굴린 주사위와 그 결과.
-var _selected: Array[DiceData] = []
-var _roll_results: Array[FaceData] = []
+## 이번 턴 굴린 결과. 각 항목 = {die: DiceData, face: FaceData}
+var _roll_results: Array[Dictionary] = []
 
-func start_battle(enemies: Array[EnemyData]) -> void:
-	_enemies = enemies
+func start_battle(enemy_defs: Array[EnemyData]) -> void:
+	_enemies.clear()
+	for def in enemy_defs:
+		_enemies.append(EnemyInstance.new(def))
 	_draw_pile = GameManager.dice_pool.duplicate()
 	_draw_pile.shuffle()
 	_discard_pile.clear()
@@ -48,9 +51,13 @@ func _change_state(new_state: State) -> void:
 
 # --- DRAW ---------------------------------------------------------------
 func _do_draw() -> void:
+	player_block = 0  # 방어는 다음 내 턴 시작 시 소멸
 	_hand.clear()
+	_roll_results.clear()
 	for i in HAND_SIZE:
-		_hand.append(_draw_one())
+		var d := _draw_one()
+		if d != null:
+			_hand.append(d)
 	hand_drawn.emit(_hand)
 	_change_state(State.PLAYER_TURN)
 
@@ -67,54 +74,125 @@ func _reshuffle() -> void:
 	_draw_pile.shuffle()
 
 # --- PLAYER_TURN (입력 레이어가 호출) -----------------------------------
-## 플레이어가 핸드에서 주사위를 선택하고 굴린다.
-func roll_selected(selection: Array[DiceData]) -> void:
-	_selected = selection
+## 현재 핸드 전체를 굴린다.
+func roll_hand() -> void:
 	_roll_results.clear()
-	for d in _selected:
-		_roll_results.append(d.roll())
+	for d in _hand:
+		_roll_results.append({"die": d, "face": d.roll()})
 	dice_rolled.emit(_roll_results)
 
-## 리롤 토큰을 1개 써서 다시 굴린다. 토큰 없으면 false.
+## 리롤 토큰 1개를 써서 다시 굴린다. 토큰 없으면 false.
 func reroll() -> bool:
 	if not GameManager.spend_reroll_token():
 		return false
-	roll_selected(_selected)
+	roll_hand()
 	return true
 
-## 플레이어가 결과를 확정하면 RESOLVE 로 진행.
+## 결과 확정 → RESOLVE 진행. 아직 안 굴렸으면 무시.
 func confirm_turn() -> void:
+	if _roll_results.is_empty():
+		return
 	_change_state(State.RESOLVE)
 
 # --- RESOLVE ------------------------------------------------------------
 func _do_resolve() -> void:
-	# TODO: _roll_results 를 적용 (데미지/실드/효과) + 시너지 판정
-	#       (같은 속성 면 2개 이상 → 추가 효과)
-	_apply_synergies()
-	# 사용한 주사위는 버린 더미로
+	var damage: int = 0
+	var block_gain: int = 0
+	var element_counts: Dictionary = {}  # FaceKind -> count
+
+	for r in _roll_results:
+		var die: DiceData = r["die"]
+		var face: FaceData = r["face"]
+		match face.kind:
+			DiceData.FaceKind.NUMBER:
+				if die.dice_type == DiceData.DiceType.DEFENSE:
+					block_gain += face.value
+				else:
+					damage += face.value  # ATTACK / SKILL 숫자 면
+			DiceData.FaceKind.FIRE, DiceData.FaceKind.ICE, DiceData.FaceKind.LIGHTNING:
+				damage += face.value
+				element_counts[face.kind] = element_counts.get(face.kind, 0) + 1
+			DiceData.FaceKind.CURSE:
+				GameManager.grant_reroll_tokens(GameManager.reroll_tokens + 1)
+				log_message.emit("💀 저주 면 — 리롤 토큰 +1")
+			DiceData.FaceKind.REROLL:
+				GameManager.grant_reroll_tokens(GameManager.reroll_tokens + 1)
+				log_message.emit("🔄 리롤 토큰 +1")
+
+	# 시너지: 같은 속성 면 2개 이상 → 폭발 추가 데미지
+	for kind in element_counts:
+		if element_counts[kind] >= 2:
+			damage += SYNERGY_BONUS
+			log_message.emit("✨ 시너지 발동! 추가 데미지 +%d" % SYNERGY_BONUS)
+
+	player_block += block_gain
+	if block_gain > 0:
+		log_message.emit("🛡️ 방어 +%d (현재 %d)" % [block_gain, player_block])
+
+	if damage > 0:
+		var target := _first_alive_enemy()
+		if target != null:
+			target.take_damage(damage)
+			log_message.emit("⚔️ %s 에게 %d 데미지" % [target.data.display_name, damage])
+
+	# 사용한 핸드는 버린 더미로
 	for d in _hand:
-		if d != null:
-			_discard_pile.append(d)
-	turn_resolved.emit()
+		_discard_pile.append(d)
+
 	if _all_enemies_dead():
+		log_message.emit("🎉 전투 승리!")
 		_change_state(State.REWARD)
+		battle_ended.emit(true)
 	else:
 		_change_state(State.ENEMY_TURN)
 
-func _apply_synergies() -> void:
-	# TODO: _roll_results 의 FaceData.kind 별 개수를 세어 2개 이상이면 보너스 적용.
-	pass
-
 # --- ENEMY_TURN ---------------------------------------------------------
 func _do_enemy_turn() -> void:
-	# TODO: 각 적의 현재 의도(IntentData)를 실행 → 플레이어에게 적용.
-	#       이후 다음 의도로 진행.
+	for enemy in _enemies:
+		if enemy.is_dead():
+			continue
+		_execute_intent(enemy)
+		if GameManager.current_hp <= 0:
+			log_message.emit("💀 패배...")
+			battle_ended.emit(false)
+			return
+		enemy.advance_intent()
 	_change_state(State.DRAW)
 
-# --- 종료 판정 ----------------------------------------------------------
+func _execute_intent(enemy: EnemyInstance) -> void:
+	var intent := enemy.current_intent()
+	if intent == null:
+		return
+	match intent.kind:
+		IntentData.IntentKind.CHARGE, IntentData.IntentKind.SNIPE, IntentData.IntentKind.EXPLODE:
+			_player_take_damage(intent.value)
+			log_message.emit("%s 의 공격 — %d 데미지" % [enemy.data.display_name, intent.value])
+		IntentData.IntentKind.REINFORCE:
+			enemy.gain_block(intent.value)
+			log_message.emit("%s 가 방어 +%d" % [enemy.data.display_name, intent.value])
+		IntentData.IntentKind.SUMMON:
+			log_message.emit("%s 가 증원을 시도했다 (미구현)" % enemy.data.display_name)
+
+func _player_take_damage(amount: int) -> void:
+	var absorbed: int = min(player_block, amount)
+	player_block -= absorbed
+	GameManager.take_damage(amount - absorbed)
+
+# --- 조회 --------------------------------------------------------------
+func _first_alive_enemy() -> EnemyInstance:
+	for e in _enemies:
+		if not e.is_dead():
+			return e
+	return null
+
 func _all_enemies_dead() -> bool:
-	# TODO: 적 HP 추적 인스턴스 도입 후 실제 판정으로 교체.
-	return false
+	return _first_alive_enemy() == null
 
 func get_state() -> State:
 	return _state
+
+func get_enemies() -> Array[EnemyInstance]:
+	return _enemies
+
+func get_hand() -> Array[DiceData]:
+	return _hand
