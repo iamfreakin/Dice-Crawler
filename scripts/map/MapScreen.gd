@@ -1,15 +1,16 @@
 extends Control
-## 노드 맵 화면. 행 단위로 노드를 표시하고, 이동 가능한 노드만 선택할 수 있다.
-## 전투 노드 → Battle 씬으로 전환. 휴식/상점 → 효과 적용 후 맵 갱신.
+## 런 맵 화면. 이동 가능한 노드만 선택할 수 있다.
 
 const REST_HEAL: int = 12
 
 var _rows_box: VBoxContainer
 var _status_label: Label
 
+
 func _ready() -> void:
 	theme = UITheme.shared()
 	UITheme.add_background(self, "res://assets/sprites/ui/bg_map.png")
+
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.offset_left = 40
@@ -20,7 +21,7 @@ func _ready() -> void:
 	add_child(root)
 
 	var title := Label.new()
-	title.text = "🗺️ 노드 맵 — 다음 목적지를 선택하세요"
+	title.text = "맵 - 다음 목적지를 선택하세요"
 	title.add_theme_font_size_override("font_size", 22)
 	root.add_child(title)
 
@@ -41,6 +42,7 @@ func _ready() -> void:
 
 	_render()
 
+
 func _render() -> void:
 	for child in _rows_box.get_children():
 		child.queue_free()
@@ -49,7 +51,7 @@ func _render() -> void:
 	for r in GameManager.relics:
 		relic_names.append(r.display_name)
 	var relic_part := ("   |   유물: " + ", ".join(relic_names)) if not relic_names.is_empty() else ""
-	_status_label.text = "HP: %d/%d   |   💰 %d   |   층: %d%s" % [
+	_status_label.text = "HP: %d/%d   |   골드: %d   |   층: %d%s" % [
 		GameManager.current_hp, GameManager.max_hp, GameManager.gold,
 		GameManager.current_floor, relic_part
 	]
@@ -59,7 +61,6 @@ func _render() -> void:
 	for n in available:
 		available_ids.append(n.id)
 
-	# 보스 행이 위로 오도록 역순 표시 (위로 올라가는 진행감)
 	for r in range(GameManager.map.size() - 1, -1, -1):
 		var row: Array = GameManager.map[r]
 		var hbox := HBoxContainer.new()
@@ -71,15 +72,14 @@ func _render() -> void:
 			var btn := Button.new()
 			var is_available: bool = available_ids.has(node.id)
 			var is_current: bool = GameManager.current_node != null and GameManager.current_node.id == node.id
-			var mark := ""
-			if is_current:
-				mark = " ◀ 현재"
+			var mark := "  현재" if is_current else ""
 			btn.text = MapNode.type_label(node.type) + mark
 			btn.custom_minimum_size = Vector2(120, 40)
 			btn.disabled = not is_available
 			if is_available:
 				btn.pressed.connect(_on_node_selected.bind(node))
 			hbox.add_child(btn)
+
 
 func _on_node_selected(node: MapNode) -> void:
 	GameManager.move_to(node)
