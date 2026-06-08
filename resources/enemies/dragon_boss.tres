@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/IntentData.gd" id="1_intent"]
+[ext_resource type="Script" path="res://scripts/data/EnemyData.gd" id="2_enemy"]
+
+[sub_resource type="Resource" id="Intent_drg_1"]
+script = ExtResource("1_intent")
+kind = 1
+value = 10
+
+[sub_resource type="Resource" id="Intent_drg_2"]
+script = ExtResource("1_intent")
+kind = 2
+value = 16
+
+[sub_resource type="Resource" id="Intent_drg_3"]
+script = ExtResource("1_intent")
+kind = 3
+value = 10
+
+[sub_resource type="Resource" id="Intent_drg_4"]
+script = ExtResource("1_intent")
+kind = 0
+value = 13
+
+[resource]
+script = ExtResource("2_enemy")
+id = &"dragon_boss"
+display_name = "고룡 드래곤"
+tier = 2
+max_hp = 60
+intent_pattern = [SubResource("Intent_drg_1"), SubResource("Intent_drg_2"), SubResource("Intent_drg_3"), SubResource("Intent_drg_4")]

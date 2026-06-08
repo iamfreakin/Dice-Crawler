@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/RelicData.gd" id="1_relic"]
+
+[resource]
+script = ExtResource("1_relic")
+id = &"ember_core"
+display_name = "🔥 불씨 정수"
+description = "화상 부여량 +2"
+effect = 2
+value = 2

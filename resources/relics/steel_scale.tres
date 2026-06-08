@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/RelicData.gd" id="1_relic"]
+
+[resource]
+script = ExtResource("1_relic")
+id = &"steel_scale"
+display_name = "🛡️ 강철 비늘"
+description = "내 턴 시작 시 방어 +3"
+effect = 1
+value = 3

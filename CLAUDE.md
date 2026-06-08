@@ -91,7 +91,9 @@ res://
 - [x] 속성 상태이상 시스템 (🔥화상 DoT / ❄️❄️약화 / ⚡⚡취약) + 적 상태 표시
 - [x] 유물(RelicData) 시스템 — 보상 선택지 + 전투 훅
       (리롤+1 / 매턴 방어 / 화상 강화 / 최대HP+), 맵에 보유 유물 표시
-- [ ] StarterDeck/EnemyFactory/RelicFactory → res://resources/*.tres 이관
+- [x] 콘텐츠 .tres 이관 — 주사위/적/유물을 res://resources/*.tres 로
+      - Content.load_dir/load_one 로더, 팩토리가 .tres 로드 (StarterDeck은 deep duplicate)
+      - 콘텐츠 추가 = .tres 파일 추가 (코드 수정 불필요)
 - [ ] 다중 적 + 타겟 선택 UI
 - [ ] 정식 상점(SHOP, 골드 자원)
 - [ ] 핸드 드로우 N개 중 2개 선택 UI (현재는 핸드 2개 전체 굴림)

@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="DiceData" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/FaceData.gd" id="1_face"]
+[ext_resource type="Script" path="res://scripts/data/DiceData.gd" id="2_dice"]
+
+[sub_resource type="Resource" id="Face_skl_fire"]
+script = ExtResource("1_face")
+kind = 1
+value = 3
+label = "🔥3"
+
+[sub_resource type="Resource" id="Face_skl_ice"]
+script = ExtResource("1_face")
+kind = 2
+value = 3
+label = "❄️3"
+
+[sub_resource type="Resource" id="Face_skl_light"]
+script = ExtResource("1_face")
+kind = 3
+value = 3
+label = "⚡3"
+
+[sub_resource type="Resource" id="Face_skl_curse"]
+script = ExtResource("1_face")
+kind = 4
+value = 0
+label = "💀"
+
+[sub_resource type="Resource" id="Face_skl_reroll"]
+script = ExtResource("1_face")
+kind = 5
+value = 0
+label = "🔄"
+
+[sub_resource type="Resource" id="Face_skl_num"]
+script = ExtResource("1_face")
+kind = 0
+value = 2
+label = "2"
+
+[resource]
+script = ExtResource("2_dice")
+id = &"basic_skill"
+display_name = "스킬"
+dice_type = 2
+faces = [SubResource("Face_skl_fire"), SubResource("Face_skl_ice"), SubResource("Face_skl_light"), SubResource("Face_skl_curse"), SubResource("Face_skl_reroll"), SubResource("Face_skl_num")]

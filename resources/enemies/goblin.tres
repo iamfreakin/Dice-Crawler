@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/IntentData.gd" id="1_intent"]
+[ext_resource type="Script" path="res://scripts/data/EnemyData.gd" id="2_enemy"]
+
+[sub_resource type="Resource" id="Intent_gob_1"]
+script = ExtResource("1_intent")
+kind = 0
+value = 6
+
+[sub_resource type="Resource" id="Intent_gob_2"]
+script = ExtResource("1_intent")
+kind = 3
+value = 4
+
+[sub_resource type="Resource" id="Intent_gob_3"]
+script = ExtResource("1_intent")
+kind = 1
+value = 8
+
+[resource]
+script = ExtResource("2_enemy")
+id = &"goblin"
+display_name = "고블린"
+tier = 0
+max_hp = 18
+intent_pattern = [SubResource("Intent_gob_1"), SubResource("Intent_gob_2"), SubResource("Intent_gob_3")]

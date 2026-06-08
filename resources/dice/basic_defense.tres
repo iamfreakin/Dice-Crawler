@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="DiceData" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/FaceData.gd" id="1_face"]
+[ext_resource type="Script" path="res://scripts/data/DiceData.gd" id="2_dice"]
+
+[sub_resource type="Resource" id="Face_def_1"]
+script = ExtResource("1_face")
+kind = 0
+value = 1
+label = "1"
+
+[sub_resource type="Resource" id="Face_def_2"]
+script = ExtResource("1_face")
+kind = 0
+value = 2
+label = "2"
+
+[sub_resource type="Resource" id="Face_def_3"]
+script = ExtResource("1_face")
+kind = 0
+value = 3
+label = "3"
+
+[sub_resource type="Resource" id="Face_def_4"]
+script = ExtResource("1_face")
+kind = 0
+value = 4
+label = "4"
+
+[sub_resource type="Resource" id="Face_def_5"]
+script = ExtResource("1_face")
+kind = 0
+value = 5
+label = "5"
+
+[sub_resource type="Resource" id="Face_def_6"]
+script = ExtResource("1_face")
+kind = 0
+value = 6
+label = "6"
+
+[resource]
+script = ExtResource("2_dice")
+id = &"basic_defense"
+display_name = "방어"
+dice_type = 1
+faces = [SubResource("Face_def_1"), SubResource("Face_def_2"), SubResource("Face_def_3"), SubResource("Face_def_4"), SubResource("Face_def_5"), SubResource("Face_def_6")]

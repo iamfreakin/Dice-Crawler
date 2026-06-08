@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/IntentData.gd" id="1_intent"]
+[ext_resource type="Script" path="res://scripts/data/EnemyData.gd" id="2_enemy"]
+
+[sub_resource type="Resource" id="Intent_orc_1"]
+script = ExtResource("1_intent")
+kind = 0
+value = 9
+
+[sub_resource type="Resource" id="Intent_orc_2"]
+script = ExtResource("1_intent")
+kind = 3
+value = 7
+
+[sub_resource type="Resource" id="Intent_orc_3"]
+script = ExtResource("1_intent")
+kind = 2
+value = 12
+
+[resource]
+script = ExtResource("2_enemy")
+id = &"orc_elite"
+display_name = "오크 정예"
+tier = 1
+max_hp = 34
+intent_pattern = [SubResource("Intent_orc_1"), SubResource("Intent_orc_2"), SubResource("Intent_orc_3")]

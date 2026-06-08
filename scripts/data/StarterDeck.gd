@@ -1,71 +1,33 @@
 class_name StarterDeck
 extends RefCounted
-## 시작 덱(기본 주사위 3종) 구성 팩토리.
-## 지금은 코드로 생성한다. 콘텐츠가 늘어나면 res://resources/dice/*.tres 로 이관한다.
+## 시작 덱 구성. 주사위 정의는 res://resources/dice/*.tres 에서 로드한다.
+## 풀에 넣는 주사위는 deep duplicate 해서 인스턴스를 독립시킨다
+## (보상으로 한 주사위 면을 강화해도 다른 주사위에 영향 없도록).
+
+const ATTACK_PATH := "res://resources/dice/basic_attack.tres"
+const DEFENSE_PATH := "res://resources/dice/basic_defense.tres"
+const SKILL_PATH := "res://resources/dice/basic_skill.tres"
+
+static func _load_die(path: String) -> DiceData:
+	var die := Content.load_one(path) as DiceData
+	if die == null:
+		return null
+	return die.duplicate(true)  # 면(FaceData)까지 깊은 복제
+
+static func attack_die() -> DiceData:
+	return _load_die(ATTACK_PATH)
+
+static func defense_die() -> DiceData:
+	return _load_die(DEFENSE_PATH)
+
+static func skill_die() -> DiceData:
+	return _load_die(SKILL_PATH)
 
 ## 시작 덱: 기본 주사위 각 2개씩 (공격2 / 방어2 / 스킬2, 총 6개).
 static func build() -> Array[DiceData]:
 	var deck: Array[DiceData] = []
-	deck.append(attack_die())
-	deck.append(attack_die())
-	deck.append(defense_die())
-	deck.append(defense_die())
-	deck.append(skill_die())
-	deck.append(skill_die())
+	for i in 2:
+		deck.append(attack_die())
+		deck.append(defense_die())
+		deck.append(skill_die())
 	return deck
-
-# --- 면 헬퍼 ------------------------------------------------------------
-static func _number_face(v: int) -> FaceData:
-	var f := FaceData.new()
-	f.kind = DiceData.FaceKind.NUMBER
-	f.value = v
-	f.label = str(v)
-	return f
-
-static func _special_face(kind: DiceData.FaceKind, v: int, label: String) -> FaceData:
-	var f := FaceData.new()
-	f.kind = kind
-	f.value = v
-	f.label = label
-	return f
-
-static func _number_faces(values: Array[int]) -> Array[FaceData]:
-	var faces: Array[FaceData] = []
-	for v in values:
-		faces.append(_number_face(v))
-	return faces
-
-# --- 기본 주사위 3종 (보상 등에서 재사용하도록 public) --------------------
-## ⚔️ 공격 — 1~6 균등 (데미지)
-static func attack_die() -> DiceData:
-	var d := DiceData.new()
-	d.id = &"basic_attack"
-	d.display_name = "공격"
-	d.dice_type = DiceData.DiceType.ATTACK
-	d.faces = _number_faces([1, 2, 3, 4, 5, 6])
-	return d
-
-## 🛡️ 방어 — 1~6 균등 (실드/체력)
-static func defense_die() -> DiceData:
-	var d := DiceData.new()
-	d.id = &"basic_defense"
-	d.display_name = "방어"
-	d.dice_type = DiceData.DiceType.DEFENSE
-	d.faces = _number_faces([1, 2, 3, 4, 5, 6])
-	return d
-
-## ✨ 스킬 — 🔥 ❄️ ⚡ 💀 🔄 + 숫자
-static func skill_die() -> DiceData:
-	var d := DiceData.new()
-	d.id = &"basic_skill"
-	d.display_name = "스킬"
-	d.dice_type = DiceData.DiceType.SKILL
-	var faces: Array[FaceData] = []
-	faces.append(_special_face(DiceData.FaceKind.FIRE, 3, "🔥3"))
-	faces.append(_special_face(DiceData.FaceKind.ICE, 3, "❄️3"))
-	faces.append(_special_face(DiceData.FaceKind.LIGHTNING, 3, "⚡3"))
-	faces.append(_special_face(DiceData.FaceKind.CURSE, 0, "💀"))
-	faces.append(_special_face(DiceData.FaceKind.REROLL, 0, "🔄"))
-	faces.append(_number_face(2))
-	d.faces = faces
-	return d
