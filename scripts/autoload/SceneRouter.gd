@@ -6,6 +6,7 @@ const MAIN_MENU := "res://scenes/MainMenu.tscn"
 const MAP := "res://scenes/Map.tscn"
 const BATTLE := "res://scenes/Battle.tscn"
 const REWARD := "res://scenes/Reward.tscn"
+const SHOP := "res://scenes/Shop.tscn"
 
 func goto(path: String) -> void:
 	get_tree().change_scene_to_file(path)

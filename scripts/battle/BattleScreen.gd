@@ -177,9 +177,9 @@ func _append_log(text: String) -> void:
 # --- 표시 갱신 ----------------------------------------------------------
 func _refresh() -> void:
 	_refresh_enemy()
-	_player_label.text = "🧙 플레이어   HP: %d/%d   🛡️ %d   🔄 토큰: %d" % [
+	_player_label.text = "🧙 플레이어   HP: %d/%d   🛡️ %d   🔄 토큰: %d   💰 %d" % [
 		GameManager.current_hp, GameManager.max_hp,
-		_bm.player_block if _bm else 0, GameManager.reroll_tokens
+		_bm.player_block if _bm else 0, GameManager.reroll_tokens, GameManager.gold
 	]
 	_update_buttons()
 

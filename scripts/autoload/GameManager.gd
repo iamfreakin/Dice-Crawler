@@ -6,6 +6,7 @@ extends Node
 signal hp_changed(current: int, max: int)
 signal floor_changed(floor: int)
 signal reroll_tokens_changed(amount: int)
+signal gold_changed(amount: int)
 signal run_started
 signal run_ended(victory: bool)
 
@@ -13,6 +14,7 @@ signal run_ended(victory: bool)
 var max_hp: int = 50
 var current_hp: int = 50
 var current_floor: int = 0
+var gold: int = 0
 
 ## 주사위 풀(덱). 전투 시 여기서 드로우한다.
 var dice_pool: Array[DiceData] = []
@@ -29,6 +31,7 @@ var current_node: MapNode = null ## 플레이어가 현재 위치한 노드 (nul
 func start_new_run() -> void:
 	current_hp = max_hp
 	current_floor = 0
+	gold = 0
 	dice_pool.clear()
 	relics.clear()
 	reroll_tokens = 0
@@ -36,6 +39,18 @@ func start_new_run() -> void:
 	_grant_starting_dice()
 	map = MapGenerator.generate()
 	run_started.emit()
+
+# --- 골드 --------------------------------------------------------------
+func add_gold(amount: int) -> void:
+	gold += amount
+	gold_changed.emit(gold)
+
+func spend_gold(amount: int) -> bool:
+	if gold < amount:
+		return false
+	gold -= amount
+	gold_changed.emit(gold)
+	return true
 
 # --- 맵 이동 ------------------------------------------------------------
 ## 현재 위치에서 이동 가능한 다음 노드들.

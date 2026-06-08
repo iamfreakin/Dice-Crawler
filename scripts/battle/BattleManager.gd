@@ -159,9 +159,7 @@ func _do_resolve() -> void:
 		_discard_pile.append(d)
 
 	if _all_enemies_dead():
-		log_message.emit("🎉 전투 승리!")
-		_change_state(State.REWARD)
-		battle_ended.emit(true)
+		_win()
 	else:
 		_change_state(State.ENEMY_TURN)
 
@@ -175,9 +173,7 @@ func _do_enemy_turn() -> void:
 		if burn_dmg > 0:
 			log_message.emit("🔥 %s 이(가) 화상으로 %d 피해" % [enemy.data.display_name, burn_dmg])
 	if _all_enemies_dead():
-		log_message.emit("🎉 전투 승리! (화상)")
-		_change_state(State.REWARD)
-		battle_ended.emit(true)
+		_win()
 		return
 
 	# 2) 적 행동
@@ -213,6 +209,27 @@ func _player_take_damage(amount: int) -> void:
 	var absorbed: int = min(player_block, amount)
 	player_block -= absorbed
 	GameManager.take_damage(amount - absorbed)
+
+# --- 승리 처리 ----------------------------------------------------------
+func _win() -> void:
+	_grant_victory_gold()
+	log_message.emit("🎉 전투 승리!")
+	_change_state(State.REWARD)
+	battle_ended.emit(true)
+
+## 처치한 적 등급에 따라 골드 지급.
+func _grant_victory_gold() -> void:
+	var total: int = 0
+	for e in _enemies:
+		match e.data.tier:
+			EnemyData.Tier.NORMAL:
+				total += randi_range(12, 20)
+			EnemyData.Tier.ELITE:
+				total += randi_range(30, 45)
+			EnemyData.Tier.BOSS:
+				total += randi_range(60, 80)
+	GameManager.add_gold(total)
+	log_message.emit("💰 골드 +%d (보유 %d)" % [total, GameManager.gold])
 
 # --- 조회 --------------------------------------------------------------
 func _first_alive_enemy() -> EnemyInstance:

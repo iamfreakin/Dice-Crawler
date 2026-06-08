@@ -3,7 +3,6 @@ extends Control
 ## 전투 노드 → Battle 씬으로 전환. 휴식/상점 → 효과 적용 후 맵 갱신.
 
 const REST_HEAL: int = 12
-const SHOP_HEAL: int = 6  # 상점 임시 처리 (정식 상점은 추후)
 
 var _rows_box: VBoxContainer
 var _status_label: Label
@@ -48,8 +47,9 @@ func _render() -> void:
 	for r in GameManager.relics:
 		relic_names.append(r.display_name)
 	var relic_part := ("   |   유물: " + ", ".join(relic_names)) if not relic_names.is_empty() else ""
-	_status_label.text = "HP: %d/%d   |   층: %d%s" % [
-		GameManager.current_hp, GameManager.max_hp, GameManager.current_floor, relic_part
+	_status_label.text = "HP: %d/%d   |   💰 %d   |   층: %d%s" % [
+		GameManager.current_hp, GameManager.max_hp, GameManager.gold,
+		GameManager.current_floor, relic_part
 	]
 
 	var available := GameManager.get_available_nodes()
@@ -88,5 +88,4 @@ func _on_node_selected(node: MapNode) -> void:
 			GameManager.heal(REST_HEAL)
 			_render()
 		MapNode.Type.SHOP:
-			GameManager.heal(SHOP_HEAL)
-			_render()
+			SceneRouter.goto(SceneRouter.SHOP)

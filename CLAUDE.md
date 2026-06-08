@@ -94,7 +94,7 @@ res://
 - [x] 콘텐츠 .tres 이관 — 주사위/적/유물을 res://resources/*.tres 로
       - Content.load_dir/load_one 로더, 팩토리가 .tres 로드 (StarterDeck은 deep duplicate)
       - 콘텐츠 추가 = .tres 파일 추가 (코드 수정 불필요)
+- [x] 상점(SHOP) + 골드 — 전투 승리 시 골드 드롭, 상점에서 주사위/유물/회복 구매
 - [ ] 다중 적 + 타겟 선택 UI
-- [ ] 정식 상점(SHOP, 골드 자원)
 - [ ] 핸드 드로우 N개 중 2개 선택 UI (현재는 핸드 2개 전체 굴림)
 - [ ] 비주얼/사운드, scenes/Main.tscn(초기 데모) 정리
