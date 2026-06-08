@@ -16,6 +16,7 @@ const HAND_SIZE: int = 3  ## 핸드에서 선택해 굴리는 주사위 수
 
 var _state: State = State.DRAW
 var _enemies: Array[EnemyInstance] = []
+var target_index: int = 0  ## 플레이어가 선택한 공격 대상 인덱스
 var player_block: int = 0
 
 ## 드로우 풀/버린 더미 (StS 카드 구조: 풀 소진 시 셔플 후 재드로우).
@@ -27,6 +28,7 @@ var _roll_results: Array[Dictionary] = []
 
 func start_battle(enemy_defs: Array[EnemyData]) -> void:
 	_enemies.clear()
+	target_index = 0
 	for def in enemy_defs:
 		_enemies.append(EnemyInstance.new(def))
 	_draw_pile = GameManager.dice_pool.duplicate()
@@ -125,7 +127,7 @@ func _do_resolve() -> void:
 				GameManager.grant_reroll_tokens(GameManager.reroll_tokens + 1)
 				log_message.emit("🔄 리롤 토큰 +1")
 
-	var target := _first_alive_enemy()
+	var target := current_target()
 
 	# 속성별 시너지 (같은 속성 2개 이상)
 	if element_counts.get(DiceData.FaceKind.FIRE, 0) >= 2:
@@ -231,7 +233,19 @@ func _grant_victory_gold() -> void:
 	GameManager.add_gold(total)
 	log_message.emit("💰 골드 +%d (보유 %d)" % [total, GameManager.gold])
 
-# --- 조회 --------------------------------------------------------------
+# --- 타겟 / 조회 --------------------------------------------------------
+## 현재 공격 대상. 선택 대상이 죽었으면 살아있는 첫 적으로 대체.
+func current_target() -> EnemyInstance:
+	if target_index >= 0 and target_index < _enemies.size():
+		var e: EnemyInstance = _enemies[target_index]
+		if not e.is_dead():
+			return e
+	return _first_alive_enemy()
+
+func set_target(index: int) -> void:
+	if index >= 0 and index < _enemies.size() and not _enemies[index].is_dead():
+		target_index = index
+
 func _first_alive_enemy() -> EnemyInstance:
 	for e in _enemies:
 		if not e.is_dead():

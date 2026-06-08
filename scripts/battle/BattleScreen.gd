@@ -6,7 +6,7 @@ var _bm: BattleManager
 var _has_rolled: bool = false
 var _ended: bool = false
 
-var _enemy_label: Label
+var _enemy_box: VBoxContainer
 var _player_label: Label
 var _hand_label: Label
 var _result_label: Label
@@ -36,18 +36,23 @@ func _ready() -> void:
 	_bm.start_battle(_encounter())
 	_refresh()
 
-## 현재 맵 노드 유형에 따라 적 구성을 결정한다.
+## 현재 맵 노드 유형에 따라 적 구성을 결정한다 (다중 적 가능).
 func _encounter() -> Array[EnemyData]:
 	var t := MapNode.Type.BATTLE
 	if GameManager.current_node != null:
 		t = GameManager.current_node.type
 	match t:
 		MapNode.Type.ELITE:
-			return [EnemyFactory.orc_elite()]
+			# 정예 + 졸개
+			return [EnemyFactory.orc_elite(), EnemyFactory.goblin()]
 		MapNode.Type.BOSS:
 			return [EnemyFactory.dragon_boss()]
 		_:
-			return [EnemyFactory.goblin()]
+			# 일반 전투: 고블린 + 50% 확률로 박쥐 1마리
+			var list: Array[EnemyData] = [EnemyFactory.goblin()]
+			if randf() < 0.5:
+				list.append(EnemyFactory.cave_bat())
+			return list
 
 # --- UI 구성 ------------------------------------------------------------
 func _build_ui() -> void:
@@ -65,9 +70,13 @@ func _build_ui() -> void:
 	title.add_theme_font_size_override("font_size", 24)
 	root.add_child(title)
 
-	_enemy_label = Label.new()
-	_enemy_label.add_theme_font_size_override("font_size", 18)
-	root.add_child(_enemy_label)
+	var enemy_hint := Label.new()
+	enemy_hint.text = "👹 적 (클릭해서 공격 대상 선택)"
+	root.add_child(enemy_hint)
+
+	_enemy_box = VBoxContainer.new()
+	_enemy_box.add_theme_constant_override("separation", 4)
+	root.add_child(_enemy_box)
 
 	root.add_child(HSeparator.new())
 
@@ -176,29 +185,45 @@ func _append_log(text: String) -> void:
 
 # --- 표시 갱신 ----------------------------------------------------------
 func _refresh() -> void:
-	_refresh_enemy()
+	_refresh_enemies()
 	_player_label.text = "🧙 플레이어   HP: %d/%d   🛡️ %d   🔄 토큰: %d   💰 %d" % [
 		GameManager.current_hp, GameManager.max_hp,
 		_bm.player_block if _bm else 0, GameManager.reroll_tokens, GameManager.gold
 	]
 	_update_buttons()
 
-func _refresh_enemy() -> void:
+## 적 목록을 타겟 선택 버튼으로 다시 그린다.
+func _refresh_enemies() -> void:
 	if _bm == null:
 		return
+	for child in _enemy_box.get_children():
+		child.queue_free()
+
 	var enemies := _bm.get_enemies()
-	if enemies.is_empty():
-		return
-	var e: EnemyInstance = enemies[0]
-	if e.is_dead():
-		_enemy_label.text = "%s — 처치됨" % e.data.display_name
-		return
-	var status := e.status_text()
-	var status_part := ("   [%s]" % status) if status != "" else ""
-	_enemy_label.text = "👹 %s   HP: %d/%d   🛡️ %d   의도: %s%s" % [
-		e.data.display_name, e.current_hp, e.data.max_hp, e.block,
-		_intent_text(e.current_intent()), status_part
-	]
+	var target := _bm.current_target()
+	for i in enemies.size():
+		var e: EnemyInstance = enemies[i]
+		var btn := Button.new()
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		if e.is_dead():
+			btn.text = "   %s — 처치됨" % e.data.display_name
+			btn.disabled = true
+		else:
+			var is_target: bool = (e == target)
+			var prefix := "🎯 " if is_target else "    "
+			var status := e.status_text()
+			var status_part := ("   [%s]" % status) if status != "" else ""
+			btn.text = "%s👹 %s   HP %d/%d   🛡️ %d   의도: %s%s" % [
+				prefix, e.data.display_name, e.current_hp, e.data.max_hp, e.block,
+				_intent_text(e.current_intent()), status_part
+			]
+			btn.disabled = _ended
+			btn.pressed.connect(_on_target_pressed.bind(i))
+		_enemy_box.add_child(btn)
+
+func _on_target_pressed(index: int) -> void:
+	_bm.set_target(index)
+	_refresh()
 
 func _intent_text(intent: IntentData) -> String:
 	if intent == null:
