@@ -88,8 +88,9 @@ res://
       - SceneRouter Autoload: 씬 전환 일원화
       - GameManager: 맵 상태/이동(get_available_nodes/move_to)
       - 노드 유형별 적(고블린/오크정예/드래곤 보스), 보상 3택, 보스 클리어 판정
+- [x] 속성 상태이상 시스템 (🔥화상 DoT / ❄️❄️약화 / ⚡⚡취약) + 적 상태 표시
 - [ ] StarterDeck/EnemyFactory → res://resources/*.tres 이관
-- [ ] 다중 적 + 타겟 선택, 시너지 다양화 (❄️ 빙결/⚡ 감전 등)
+- [ ] 다중 적 + 타겟 선택 UI
 - [ ] 정식 상점(SHOP), 유물(RelicData) 시스템
 - [ ] 핸드 드로우 N개 중 2개 선택 UI (현재는 핸드 2개 전체 굴림)
 - [ ] 비주얼/사운드, scenes/Main.tscn(초기 데모) 정리

@@ -12,8 +12,7 @@ signal battle_ended(victory: bool)
 
 enum State { DRAW, PLAYER_TURN, RESOLVE, ENEMY_TURN, REWARD }
 
-const HAND_SIZE: int = 2  ## 핸드에서 선택해 굴리는 주사위 수
-const SYNERGY_BONUS: int = 3  ## 같은 속성 2개 이상 시너지 추가 데미지
+const HAND_SIZE: int = 3  ## 핸드에서 선택해 굴리는 주사위 수
 
 var _state: State = State.DRAW
 var _enemies: Array[EnemyInstance] = []
@@ -98,6 +97,7 @@ func confirm_turn() -> void:
 func _do_resolve() -> void:
 	var damage: int = 0
 	var block_gain: int = 0
+	var burn_to_apply: int = 0
 	var element_counts: Dictionary = {}  # FaceKind -> count
 
 	for r in _roll_results:
@@ -109,7 +109,11 @@ func _do_resolve() -> void:
 					block_gain += face.value
 				else:
 					damage += face.value  # ATTACK / SKILL 숫자 면
-			DiceData.FaceKind.FIRE, DiceData.FaceKind.ICE, DiceData.FaceKind.LIGHTNING:
+			DiceData.FaceKind.FIRE:
+				damage += face.value
+				burn_to_apply += 2  # 🔥 화상 부여
+				element_counts[face.kind] = element_counts.get(face.kind, 0) + 1
+			DiceData.FaceKind.ICE, DiceData.FaceKind.LIGHTNING:
 				damage += face.value
 				element_counts[face.kind] = element_counts.get(face.kind, 0) + 1
 			DiceData.FaceKind.CURSE:
@@ -119,21 +123,33 @@ func _do_resolve() -> void:
 				GameManager.grant_reroll_tokens(GameManager.reroll_tokens + 1)
 				log_message.emit("🔄 리롤 토큰 +1")
 
-	# 시너지: 같은 속성 면 2개 이상 → 폭발 추가 데미지
-	for kind in element_counts:
-		if element_counts[kind] >= 2:
-			damage += SYNERGY_BONUS
-			log_message.emit("✨ 시너지 발동! 추가 데미지 +%d" % SYNERGY_BONUS)
+	var target := _first_alive_enemy()
 
+	# 속성별 시너지 (같은 속성 2개 이상)
+	if element_counts.get(DiceData.FaceKind.FIRE, 0) >= 2:
+		burn_to_apply += 3
+		log_message.emit("🔥🔥 시너지 — 화상 강화 (+3)")
+	if target != null and element_counts.get(DiceData.FaceKind.ICE, 0) >= 2:
+		target.apply_weak(2)
+		log_message.emit("❄️❄️ 시너지 — 적 약화 2턴")
+	if target != null and element_counts.get(DiceData.FaceKind.LIGHTNING, 0) >= 2:
+		target.apply_vulnerable(2)
+		log_message.emit("⚡⚡ 시너지 — 적 취약 2턴")
+
+	# 방어 적용
 	player_block += block_gain
 	if block_gain > 0:
 		log_message.emit("🛡️ 방어 +%d (현재 %d)" % [block_gain, player_block])
 
-	if damage > 0:
-		var target := _first_alive_enemy()
-		if target != null:
+	# 적에게 효과/데미지 적용 (취약은 take_damage 내부에서 반영)
+	if target != null:
+		if burn_to_apply > 0:
+			target.apply_burn(burn_to_apply)
+			log_message.emit("🔥 %s 에게 화상 +%d" % [target.data.display_name, burn_to_apply])
+		if damage > 0:
+			var dealt := target.effective_damage(damage)
 			target.take_damage(damage)
-			log_message.emit("⚔️ %s 에게 %d 데미지" % [target.data.display_name, damage])
+			log_message.emit("⚔️ %s 에게 %d 데미지" % [target.data.display_name, dealt])
 
 	# 사용한 핸드는 버린 더미로
 	for d in _hand:
@@ -148,6 +164,20 @@ func _do_resolve() -> void:
 
 # --- ENEMY_TURN ---------------------------------------------------------
 func _do_enemy_turn() -> void:
+	# 1) 화상 등 턴 시작 상태 처리
+	for enemy in _enemies:
+		if enemy.is_dead():
+			continue
+		var burn_dmg := enemy.tick_burn()
+		if burn_dmg > 0:
+			log_message.emit("🔥 %s 이(가) 화상으로 %d 피해" % [enemy.data.display_name, burn_dmg])
+	if _all_enemies_dead():
+		log_message.emit("🎉 전투 승리! (화상)")
+		_change_state(State.REWARD)
+		battle_ended.emit(true)
+		return
+
+	# 2) 적 행동
 	for enemy in _enemies:
 		if enemy.is_dead():
 			continue
@@ -157,6 +187,7 @@ func _do_enemy_turn() -> void:
 			battle_ended.emit(false)
 			return
 		enemy.advance_intent()
+		enemy.decay_status()
 	_change_state(State.DRAW)
 
 func _execute_intent(enemy: EnemyInstance) -> void:
@@ -165,8 +196,10 @@ func _execute_intent(enemy: EnemyInstance) -> void:
 		return
 	match intent.kind:
 		IntentData.IntentKind.CHARGE, IntentData.IntentKind.SNIPE, IntentData.IntentKind.EXPLODE:
-			_player_take_damage(intent.value)
-			log_message.emit("%s 의 공격 — %d 데미지" % [enemy.data.display_name, intent.value])
+			var dmg := enemy.weakened(intent.value)  # 약화 시 공격력 감소
+			_player_take_damage(dmg)
+			var weak_note := " (약화)" if enemy.weak > 0 else ""
+			log_message.emit("%s 의 공격 — %d 데미지%s" % [enemy.data.display_name, dmg, weak_note])
 		IntentData.IntentKind.REINFORCE:
 			enemy.gain_block(intent.value)
 			log_message.emit("%s 가 방어 +%d" % [enemy.data.display_name, intent.value])

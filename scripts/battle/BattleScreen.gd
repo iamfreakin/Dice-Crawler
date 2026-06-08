@@ -193,9 +193,11 @@ func _refresh_enemy() -> void:
 	if e.is_dead():
 		_enemy_label.text = "%s — 처치됨" % e.data.display_name
 		return
-	_enemy_label.text = "👹 %s   HP: %d/%d   🛡️ %d   의도: %s" % [
+	var status := e.status_text()
+	var status_part := ("   [%s]" % status) if status != "" else ""
+	_enemy_label.text = "👹 %s   HP: %d/%d   🛡️ %d   의도: %s%s" % [
 		e.data.display_name, e.current_hp, e.data.max_hp, e.block,
-		_intent_text(e.current_intent())
+		_intent_text(e.current_intent()), status_part
 	]
 
 func _intent_text(intent: IntentData) -> String:

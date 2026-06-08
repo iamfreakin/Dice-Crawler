@@ -3,10 +3,14 @@ extends RefCounted
 ## 시작 덱(기본 주사위 3종) 구성 팩토리.
 ## 지금은 코드로 생성한다. 콘텐츠가 늘어나면 res://resources/dice/*.tres 로 이관한다.
 
+## 시작 덱: 기본 주사위 각 2개씩 (공격2 / 방어2 / 스킬2, 총 6개).
 static func build() -> Array[DiceData]:
 	var deck: Array[DiceData] = []
 	deck.append(attack_die())
+	deck.append(attack_die())
 	deck.append(defense_die())
+	deck.append(defense_die())
+	deck.append(skill_die())
 	deck.append(skill_die())
 	return deck
 
