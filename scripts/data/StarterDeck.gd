@@ -5,9 +5,9 @@ extends RefCounted
 
 static func build() -> Array[DiceData]:
 	var deck: Array[DiceData] = []
-	deck.append(_attack_die())
-	deck.append(_defense_die())
-	deck.append(_skill_die())
+	deck.append(attack_die())
+	deck.append(defense_die())
+	deck.append(skill_die())
 	return deck
 
 # --- 면 헬퍼 ------------------------------------------------------------
@@ -31,9 +31,9 @@ static func _number_faces(values: Array[int]) -> Array[FaceData]:
 		faces.append(_number_face(v))
 	return faces
 
-# --- 기본 주사위 3종 ----------------------------------------------------
+# --- 기본 주사위 3종 (보상 등에서 재사용하도록 public) --------------------
 ## ⚔️ 공격 — 1~6 균등 (데미지)
-static func _attack_die() -> DiceData:
+static func attack_die() -> DiceData:
 	var d := DiceData.new()
 	d.id = &"basic_attack"
 	d.display_name = "공격"
@@ -42,7 +42,7 @@ static func _attack_die() -> DiceData:
 	return d
 
 ## 🛡️ 방어 — 1~6 균등 (실드/체력)
-static func _defense_die() -> DiceData:
+static func defense_die() -> DiceData:
 	var d := DiceData.new()
 	d.id = &"basic_defense"
 	d.display_name = "방어"
@@ -51,7 +51,7 @@ static func _defense_die() -> DiceData:
 	return d
 
 ## ✨ 스킬 — 🔥 ❄️ ⚡ 💀 🔄 + 숫자
-static func _skill_die() -> DiceData:
+static func skill_die() -> DiceData:
 	var d := DiceData.new()
 	d.id = &"basic_skill"
 	d.display_name = "스킬"

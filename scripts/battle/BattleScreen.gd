@@ -14,9 +14,13 @@ var _log: RichTextLabel
 var _roll_btn: Button
 var _reroll_btn: Button
 var _confirm_btn: Button
+var _continue_btn: Button
+var _victory: bool = false
 
 func _ready() -> void:
-	GameManager.start_new_run()
+	# Battle.tscn 을 단독 실행하면 런이 없으므로 임시로 새 런을 시작한다.
+	if GameManager.dice_pool.is_empty():
+		GameManager.start_new_run()
 	_build_ui()
 
 	_bm = BattleManager.new()
@@ -29,9 +33,21 @@ func _ready() -> void:
 	GameManager.hp_changed.connect(func(_c, _m): _refresh())
 	GameManager.reroll_tokens_changed.connect(func(_a): _refresh())
 
-	var enemies: Array[EnemyData] = [EnemyFactory.goblin()]
-	_bm.start_battle(enemies)
+	_bm.start_battle(_encounter())
 	_refresh()
+
+## 현재 맵 노드 유형에 따라 적 구성을 결정한다.
+func _encounter() -> Array[EnemyData]:
+	var t := MapNode.Type.BATTLE
+	if GameManager.current_node != null:
+		t = GameManager.current_node.type
+	match t:
+		MapNode.Type.ELITE:
+			return [EnemyFactory.orc_elite()]
+		MapNode.Type.BOSS:
+			return [EnemyFactory.dragon_boss()]
+		_:
+			return [EnemyFactory.goblin()]
 
 # --- UI 구성 ------------------------------------------------------------
 func _build_ui() -> void:
@@ -92,6 +108,12 @@ func _build_ui() -> void:
 	_confirm_btn.pressed.connect(_on_confirm_pressed)
 	buttons.add_child(_confirm_btn)
 
+	_continue_btn = Button.new()
+	_continue_btn.text = "계속 ▶"
+	_continue_btn.visible = false
+	_continue_btn.pressed.connect(_on_continue_pressed)
+	buttons.add_child(_continue_btn)
+
 # --- 입력 ---------------------------------------------------------------
 func _on_roll_pressed() -> void:
 	if _ended or _has_rolled:
@@ -131,8 +153,23 @@ func _on_dice_rolled(results: Array) -> void:
 
 func _on_battle_ended(victory: bool) -> void:
 	_ended = true
+	_victory = victory
 	_result_label.text = "🎉 승리!" if victory else "💀 패배..."
+	_roll_btn.visible = false
+	_reroll_btn.visible = false
+	_confirm_btn.visible = false
+	_continue_btn.visible = true
 	_refresh()
+
+func _on_continue_pressed() -> void:
+	if _victory:
+		if GameManager.is_at_boss():
+			_append_log("[b]🏆 런 클리어! 보스를 처치했다.[/b]")
+			SceneRouter.goto(SceneRouter.MAIN_MENU)
+		else:
+			SceneRouter.goto(SceneRouter.REWARD)
+	else:
+		SceneRouter.goto(SceneRouter.MAIN_MENU)
 
 func _append_log(text: String) -> void:
 	_log.append_text(text + "\n")

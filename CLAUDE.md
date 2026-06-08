@@ -83,7 +83,13 @@ res://
       - RESOLVE: 데미지/방어/속성 시너지 처리
       - ENEMY_TURN: 의도(IntentData) 실행, 의도 공개 표시
       - 리롤 토큰 사용, 승/패 판정
+- [x] 전체 게임 루프 (MainMenu → Map → Battle → Reward → Map → Boss)
+      - MapGenerator: StS식 분기 노드 맵 (전투/정예/휴식/상점/보스)
+      - SceneRouter Autoload: 씬 전환 일원화
+      - GameManager: 맵 상태/이동(get_available_nodes/move_to)
+      - 노드 유형별 적(고블린/오크정예/드래곤 보스), 보상 3택, 보스 클리어 판정
 - [ ] StarterDeck/EnemyFactory → res://resources/*.tres 이관
 - [ ] 다중 적 + 타겟 선택, 시너지 다양화 (❄️ 빙결/⚡ 감전 등)
-- [ ] 노드 맵 (Map.tscn) + 화면 전환 라우터 + 보상(Reward.tscn)
-- [ ] MainMenu.tscn
+- [ ] 정식 상점(SHOP), 유물(RelicData) 시스템
+- [ ] 핸드 드로우 N개 중 2개 선택 UI (현재는 핸드 2개 전체 굴림)
+- [ ] 비주얼/사운드, scenes/Main.tscn(초기 데모) 정리

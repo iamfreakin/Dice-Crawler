@@ -22,14 +22,50 @@ var relics: Array[Resource] = []
 ## 스테이지당 리롤 토큰 (미사용 시 소멸, 이월 없음).
 var reroll_tokens: int = 0
 
+## --- 노드 맵 상태 ---
+var map: Array = []              ## Array[Array[MapNode]]
+var current_node: MapNode = null ## 플레이어가 현재 위치한 노드 (null = 시작 전)
+
 func start_new_run() -> void:
 	current_hp = max_hp
 	current_floor = 0
 	dice_pool.clear()
 	relics.clear()
 	reroll_tokens = 0
+	current_node = null
 	_grant_starting_dice()
+	map = MapGenerator.generate()
 	run_started.emit()
+
+# --- 맵 이동 ------------------------------------------------------------
+## 현재 위치에서 이동 가능한 다음 노드들.
+func get_available_nodes() -> Array[MapNode]:
+	var result: Array[MapNode] = []
+	if current_node == null:
+		if not map.is_empty():
+			for n in map[0]:
+				result.append(n)
+	else:
+		for nid in current_node.next:
+			var n := find_node(nid)
+			if n != null:
+				result.append(n)
+	return result
+
+func find_node(node_id: int) -> MapNode:
+	for row in map:
+		for n in row:
+			if n.id == node_id:
+				return n
+	return null
+
+func move_to(node: MapNode) -> void:
+	current_node = node
+	current_floor = node.row + 1
+	floor_changed.emit(current_floor)
+
+func is_at_boss() -> bool:
+	return current_node != null and current_node.type == MapNode.Type.BOSS
 
 ## 시작 덱: 기본 주사위 3종 구성.
 func _grant_starting_dice() -> void:

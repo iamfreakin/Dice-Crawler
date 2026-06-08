@@ -21,3 +21,32 @@ static func goblin() -> EnemyData:
 	pattern.append(_intent(IntentData.IntentKind.SNIPE, 8))
 	e.intent_pattern = pattern
 	return e
+
+## 오크 정예 — 엘리트. 더 단단하고 강한 공격.
+static func orc_elite() -> EnemyData:
+	var e := EnemyData.new()
+	e.id = &"orc_elite"
+	e.display_name = "오크 정예"
+	e.tier = EnemyData.Tier.ELITE
+	e.max_hp = 34
+	var pattern: Array[IntentData] = []
+	pattern.append(_intent(IntentData.IntentKind.CHARGE, 9))
+	pattern.append(_intent(IntentData.IntentKind.REINFORCE, 7))
+	pattern.append(_intent(IntentData.IntentKind.EXPLODE, 12))
+	e.intent_pattern = pattern
+	return e
+
+## 드래곤 — 보스.
+static func dragon_boss() -> EnemyData:
+	var e := EnemyData.new()
+	e.id = &"dragon_boss"
+	e.display_name = "고룡 드래곤"
+	e.tier = EnemyData.Tier.BOSS
+	e.max_hp = 60
+	var pattern: Array[IntentData] = []
+	pattern.append(_intent(IntentData.IntentKind.SNIPE, 10))
+	pattern.append(_intent(IntentData.IntentKind.EXPLODE, 16))
+	pattern.append(_intent(IntentData.IntentKind.REINFORCE, 10))
+	pattern.append(_intent(IntentData.IntentKind.CHARGE, 13))
+	e.intent_pattern = pattern
+	return e
