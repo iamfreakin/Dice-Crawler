@@ -6,7 +6,7 @@ var _bm: BattleManager
 var _has_rolled: bool = false
 var _ended: bool = false
 
-var _enemy_box: VBoxContainer
+var _enemy_box: HBoxContainer
 var _player_label: Label
 var _hand_label: Label
 var _result_label: Label
@@ -19,6 +19,7 @@ var _victory: bool = false
 
 func _ready() -> void:
 	theme = UITheme.shared()
+	UITheme.add_background(self, "res://assets/sprites/ui/bg_battle.png")
 	# Battle.tscn 을 단독 실행하면 런이 없으므로 임시로 새 런을 시작한다.
 	if GameManager.dice_pool.is_empty():
 		GameManager.start_new_run()
@@ -75,8 +76,9 @@ func _build_ui() -> void:
 	enemy_hint.text = "👹 적 (클릭해서 공격 대상 선택)"
 	root.add_child(enemy_hint)
 
-	_enemy_box = VBoxContainer.new()
-	_enemy_box.add_theme_constant_override("separation", 4)
+	_enemy_box = HBoxContainer.new()
+	_enemy_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	_enemy_box.add_theme_constant_override("separation", 24)
 	root.add_child(_enemy_box)
 
 	root.add_child(HSeparator.new())
@@ -193,7 +195,7 @@ func _refresh() -> void:
 	]
 	_update_buttons()
 
-## 적 목록을 타겟 선택 버튼으로 다시 그린다.
+## 적 목록을 스프라이트 + 의도 아이콘 + 타겟 버튼 컬럼으로 다시 그린다.
 func _refresh_enemies() -> void:
 	if _bm == null:
 		return
@@ -204,38 +206,95 @@ func _refresh_enemies() -> void:
 	var target := _bm.current_target()
 	for i in enemies.size():
 		var e: EnemyInstance = enemies[i]
+		var col := VBoxContainer.new()
+		col.alignment = BoxContainer.ALIGNMENT_END
+		col.add_theme_constant_override("separation", 2)
+		_enemy_box.add_child(col)
+
+		# 의도 아이콘 + 값 (살아있을 때만)
+		if not e.is_dead():
+			col.add_child(_make_intent_row(e.current_intent()))
+
+		# 스프라이트
+		var spr := _make_enemy_sprite(e)
+		if spr != null:
+			col.add_child(spr)
+
+		# 정보/타겟 버튼
 		var btn := Button.new()
-		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		if e.is_dead():
-			btn.text = "   %s — 처치됨" % e.data.display_name
+			btn.text = "%s — 처치됨" % e.data.display_name
 			btn.disabled = true
 		else:
-			var is_target: bool = (e == target)
-			var prefix := "🎯 " if is_target else "    "
+			var prefix := "🎯 " if (e == target) else ""
 			var status := e.status_text()
-			var status_part := ("   [%s]" % status) if status != "" else ""
-			btn.text = "%s👹 %s   HP %d/%d   🛡️ %d   의도: %s%s" % [
-				prefix, e.data.display_name, e.current_hp, e.data.max_hp, e.block,
-				_intent_text(e.current_intent()), status_part
+			var status_part := ("  [%s]" % status) if status != "" else ""
+			btn.text = "%s%s  HP %d/%d  🛡️%d%s" % [
+				prefix, e.data.display_name, e.current_hp, e.data.max_hp, e.block, status_part
 			]
 			btn.disabled = _ended
 			btn.pressed.connect(_on_target_pressed.bind(i))
-		_enemy_box.add_child(btn)
+		col.add_child(btn)
+
+func _make_enemy_sprite(e: EnemyInstance) -> TextureRect:
+	var tex := load("res://assets/sprites/enemies/%s.png" % e.data.id) as Texture2D
+	if tex == null:
+		return null
+	var tr := TextureRect.new()
+	tr.texture = tex
+	tr.custom_minimum_size = tex.get_size() * 3.0
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	if e.is_dead():
+		tr.modulate = Color(0.35, 0.35, 0.4, 0.5)
+	return tr
+
+func _make_intent_row(intent: IntentData) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 4)
+	var icon := _make_intent_icon(intent)
+	if icon != null:
+		row.add_child(icon)
+	var lbl := Label.new()
+	lbl.text = _intent_value_text(intent)
+	row.add_child(lbl)
+	return row
+
+func _make_intent_icon(intent: IntentData) -> TextureRect:
+	if intent == null:
+		return null
+	var tex := load("res://assets/sprites/intents/%s.png" % _intent_kind_name(intent.kind)) as Texture2D
+	if tex == null:
+		return null
+	var tr := TextureRect.new()
+	tr.texture = tex
+	tr.custom_minimum_size = Vector2(24, 24)
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	return tr
+
+func _intent_kind_name(kind: IntentData.IntentKind) -> String:
+	match kind:
+		IntentData.IntentKind.CHARGE: return "charge"
+		IntentData.IntentKind.SNIPE: return "snipe"
+		IntentData.IntentKind.EXPLODE: return "explode"
+		IntentData.IntentKind.REINFORCE: return "reinforce"
+		IntentData.IntentKind.SUMMON: return "summon"
+	return ""
+
+func _intent_value_text(intent: IntentData) -> String:
+	if intent == null:
+		return ""
+	match intent.kind:
+		IntentData.IntentKind.REINFORCE:
+			return "방어 %d" % intent.value
+		IntentData.IntentKind.SUMMON:
+			return "증원"
+	return str(intent.value)
 
 func _on_target_pressed(index: int) -> void:
 	_bm.set_target(index)
 	_refresh()
-
-func _intent_text(intent: IntentData) -> String:
-	if intent == null:
-		return "—"
-	match intent.kind:
-		IntentData.IntentKind.CHARGE: return "⚔️ 돌격 %d" % intent.value
-		IntentData.IntentKind.SNIPE: return "🎯 저격 %d" % intent.value
-		IntentData.IntentKind.EXPLODE: return "💣 폭발 %d" % intent.value
-		IntentData.IntentKind.REINFORCE: return "🛡️ 강화 %d" % intent.value
-		IntentData.IntentKind.SUMMON: return "📡 증원"
-	return "?"
 
 func _update_buttons() -> void:
 	_roll_btn.disabled = _ended or _has_rolled

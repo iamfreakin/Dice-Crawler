@@ -21,6 +21,19 @@ static func shared() -> Theme:
 		_theme = _build()
 	return _theme
 
+## 화면 루트 뒤에 배경 이미지를 깔아준다 (파일 없으면 무시).
+static func add_background(parent: Control, path: String) -> void:
+	var tex := load(path) as Texture2D
+	if tex == null:
+		return
+	var tr := TextureRect.new()
+	tr.texture = tex
+	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tr.stretch_mode = TextureRect.STRETCH_SCALE
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(tr)
+	parent.move_child(tr, 0)
+
 static func _btn_style(bg: Color, border: Color) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg

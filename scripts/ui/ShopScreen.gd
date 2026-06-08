@@ -6,6 +6,7 @@ var _gold_label: Label
 
 func _ready() -> void:
 	theme = UITheme.shared()
+	UITheme.add_background(self, "res://assets/sprites/ui/bg_map.png")
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)

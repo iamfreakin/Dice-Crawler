@@ -9,6 +9,7 @@ var _status_label: Label
 
 func _ready() -> void:
 	theme = UITheme.shared()
+	UITheme.add_background(self, "res://assets/sprites/ui/bg_map.png")
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.offset_left = 40
