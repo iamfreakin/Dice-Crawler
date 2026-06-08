@@ -2,6 +2,7 @@ extends Control
 ## 전투 승리 보상 화면. 보상 하나를 선택하면 맵으로 돌아간다.
 
 func _ready() -> void:
+	theme = UITheme.shared()
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)

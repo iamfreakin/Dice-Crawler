@@ -18,6 +18,7 @@ var _continue_btn: Button
 var _victory: bool = false
 
 func _ready() -> void:
+	theme = UITheme.shared()
 	# Battle.tscn 을 단독 실행하면 런이 없으므로 임시로 새 런을 시작한다.
 	if GameManager.dice_pool.is_empty():
 		GameManager.start_new_run()

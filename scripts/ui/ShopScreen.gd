@@ -5,6 +5,7 @@ var _items: Array[Dictionary] = []  ## {label, cost, action: Callable, sold: boo
 var _gold_label: Label
 
 func _ready() -> void:
+	theme = UITheme.shared()
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)

@@ -2,6 +2,7 @@ extends Control
 ## 메인 메뉴. 새 런을 시작하고 맵으로 진입한다.
 
 func _ready() -> void:
+	theme = UITheme.shared()
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
