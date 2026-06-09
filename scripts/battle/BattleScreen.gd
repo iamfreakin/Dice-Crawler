@@ -287,7 +287,7 @@ func _refresh() -> void:
 		_bm.player_block if _bm else 0, _bm.energy if _bm else 0, BattleManager.MAX_ENERGY,
 		GameManager.reroll_tokens, GameManager.gold
 	]
-	if not _ended and _bm != null:
+	if not _ended and _bm != null and _bm.get_state() == BattleManager.State.PLAYER_TURN:
 		_update_preview()
 	_update_buttons()
 
@@ -346,10 +346,7 @@ func _refresh_enemies() -> void:
 
 	var enemies := _bm.get_enemies()
 	var target := _bm.current_target()
-	# 적 공격이 내 방어(이번 턴 굴린 방어 포함)를 깎고 남는 실제 HP 피해를 미리 계산
-	var block_pool: int = (_bm.player_block if _bm else 0)
-	if not _ended:
-		block_pool += _bm.preview().block
+	var intent_forecasts := _bm.preview_enemy_intents()
 
 	for i in enemies.size():
 		var e: EnemyInstance = enemies[i]
@@ -359,12 +356,9 @@ func _refresh_enemies() -> void:
 		_enemy_box.add_child(col)
 
 		if not e.is_dead():
-			var net := -1
-			var raw := _intent_attack_damage(e)
-			if raw >= 0:
-				net = maxi(0, raw - block_pool)
-				block_pool = maxi(0, block_pool - raw)
-			col.add_child(_make_intent_row(e.current_intent(), net))
+			var forecast: Dictionary = intent_forecasts[i]
+			if forecast["will_act"]:
+				col.add_child(_make_intent_row(e.current_intent(), forecast["hp_loss"]))
 
 		var spr := _make_enemy_sprite(e)
 		if spr != null:
@@ -389,21 +383,10 @@ func _refresh_enemies() -> void:
 		col.add_child(btn)
 
 
-## 적의 현재 의도가 공격이면 플레이어가 받을(약화 반영) 피해, 아니면 -1.
-func _intent_attack_damage(e: EnemyInstance) -> int:
-	var intent := e.current_intent()
-	if intent == null:
-		return -1
-	match intent.kind:
-		IntentData.IntentKind.CHARGE, IntentData.IntentKind.SNIPE, IntentData.IntentKind.EXPLODE:
-			return e.weakened(intent.value)
-	return -1
-
-
 func _status_tooltip(e: EnemyInstance) -> String:
 	var lines: Array[String] = []
 	if e.burn > 0:
-		lines.append("화상 %d: 매 턴 시작 시 %d 피해 후 1 감소" % [e.burn, e.burn])
+		lines.append("화상 %d: 적 행동 전에 %d 피해 후 1 감소" % [e.burn, e.burn])
 	if e.weak > 0:
 		lines.append("약화 %d: 공격력 ×0.75 (%d턴)" % [e.weak, e.weak])
 	if e.vulnerable > 0:

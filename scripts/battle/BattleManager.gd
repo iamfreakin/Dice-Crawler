@@ -198,9 +198,11 @@ func _compute_outcome(target: EnemyInstance) -> BattleOutcome:
 	if o.burn > 0:
 		o.burn += GameManager.relic_value(RelicData.Effect.BURN_BOOST)
 
-	# 취약 반영 실제 피해 (이미 취약이거나 이번 턴 취약 부여 시 증폭) — 표시/미리보기용
-	var will_vuln: bool = (target != null and target.vulnerable > 0) or o.apply_vulnerable > 0
-	o.dealt = int(round(o.damage * EnemyInstance.VULNERABLE_MULT)) if will_vuln else o.damage
+	# 실제 HP 감소량: 이번 정산에서 먼저 부여되는 취약, 적 방어, 남은 HP까지 반영한다.
+	if target != null:
+		var will_vuln: bool = target.vulnerable > 0 or o.apply_vulnerable > 0
+		var effective_damage := int(round(o.damage * EnemyInstance.VULNERABLE_MULT)) if will_vuln else o.damage
+		o.dealt = mini(target.current_hp, maxi(0, effective_damage - target.block))
 
 	return o
 
@@ -208,6 +210,48 @@ func _compute_outcome(target: EnemyInstance) -> BattleOutcome:
 ## 미리보기: 적용하지 않고 현재 타겟 기준 정산값만 반환 (Phase 2 예상 피해 표시용).
 func preview() -> BattleOutcome:
 	return _compute_outcome(current_target())
+
+
+## 확정 후 적 행동 시점의 의도별 실제 HP 피해를 순서대로 예측한다.
+## 반환 항목: {will_act: bool, hp_loss: int}. 공격 의도가 아니면 hp_loss는 -1.
+func preview_enemy_intents() -> Array[Dictionary]:
+	var forecasts: Array[Dictionary] = []
+	var pending := preview() if _state == State.PLAYER_TURN else BattleOutcome.new()
+	var target := current_target()
+	var block_pool: int = player_block + pending.block
+
+	for enemy in _enemies:
+		if enemy.is_dead():
+			forecasts.append({"will_act": false, "hp_loss": -1})
+			continue
+
+		var hp_before_intent: int = enemy.current_hp
+		var burn_before_action: int = enemy.burn
+		if enemy == target:
+			hp_before_intent -= pending.dealt
+			burn_before_action += pending.burn
+
+		# 적 행동 전에 화상이 먼저 발동하므로 여기서 죽는 적은 의도를 실행하지 않는다.
+		var will_act: bool = hp_before_intent > burn_before_action
+		var hp_loss: int = -1
+		if will_act:
+			var will_be_weak: bool = enemy.weak > 0 or (enemy == target and pending.apply_weak > 0)
+			var raw_damage := _intent_attack_damage(enemy.current_intent(), will_be_weak)
+			if raw_damage >= 0:
+				hp_loss = maxi(0, raw_damage - block_pool)
+				block_pool = maxi(0, block_pool - raw_damage)
+		forecasts.append({"will_act": will_act, "hp_loss": hp_loss})
+
+	return forecasts
+
+
+func _intent_attack_damage(intent: IntentData, weakened: bool) -> int:
+	if intent == null:
+		return -1
+	match intent.kind:
+		IntentData.IntentKind.CHARGE, IntentData.IntentKind.SNIPE, IntentData.IntentKind.EXPLODE:
+			return int(round(intent.value * EnemyInstance.WEAK_MULT)) if weakened else intent.value
+	return -1
 
 
 ## BattleOutcome을 실제 게임 상태에 적용 (확정 시 1회).
@@ -228,9 +272,8 @@ func _apply_outcome(o: BattleOutcome, target: EnemyInstance) -> void:
 			target.apply_burn(o.burn)
 			log_message.emit("%s에게 화상 +%d" % [target.data.display_name, o.burn])
 		if o.damage > 0:
-			var dealt := target.effective_damage(o.damage)
 			target.take_damage(o.damage)
-			log_message.emit("%s에게 %d 피해" % [target.data.display_name, dealt])
+			log_message.emit("%s에게 %d 피해" % [target.data.display_name, o.dealt])
 
 
 func _do_enemy_turn() -> void:
@@ -263,7 +306,7 @@ func _execute_intent(enemy: EnemyInstance) -> void:
 		return
 	match intent.kind:
 		IntentData.IntentKind.CHARGE, IntentData.IntentKind.SNIPE, IntentData.IntentKind.EXPLODE:
-			var dmg := enemy.weakened(intent.value)
+			var dmg := _intent_attack_damage(intent, enemy.weak > 0)
 			_player_take_damage(dmg)
 			var weak_note := " (약화)" if enemy.weak > 0 else ""
 			log_message.emit("%s 공격: %d 피해%s" % [enemy.data.display_name, dmg, weak_note])
