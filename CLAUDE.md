@@ -104,6 +104,9 @@ res://
       (BATTLE: 고블린+박쥐, ELITE: 오크+고블린, BOSS: 드래곤 단독)
 - [x] 에너지 경제 전투 — 5장 드로우, 매 턴 에너지 3, 주사위 클릭=비용만큼
       에너지 쓰고 굴림(공격/방어 1·스킬 2), 확정 때 정산 (DiceData.energy_cost)
+- [x] (Phase 1 토대) 롤 컨텍스트 리팩토링 — RollEntry(rng_token)/RollContext(순서 로그)/
+      BattleOutcome, 정산을 순수 _compute_outcome + _apply_outcome로 분리, preview() 공개
+      (동작 동일, Phase 2 예상피해 / Phase 3 면조각의 토대)
 - [~] 비주얼 패스 (진행 중) — 화풍 픽셀아트, 에셋 전부 수령(assets/sprites)
       - [x] 코드 전역 테마(UITheme) + 다크 배경
       - [x] 픽셀 에셋 연결 1: 화면 배경, 적/플레이어 스프라이트, 의도 아이콘(32)

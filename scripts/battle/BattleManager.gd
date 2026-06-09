@@ -23,12 +23,14 @@ var energy: int = 0
 var _draw_pile: Array[DiceData] = []
 var _discard_pile: Array[DiceData] = []
 var _hand: Array[DiceData] = []
-var _rolled: Dictionary = {}  # 핸드 인덱스 -> FaceData (굴린 주사위)
+var _context: RollContext = RollContext.new()  # 이번 턴 굴림 이벤트 로그
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()  # Combat 시드 RNG
 
 
 func start_battle(enemy_defs: Array[EnemyData]) -> void:
 	_enemies.clear()
 	target_index = 0
+	_rng.randomize()
 	for def in enemy_defs:
 		_enemies.append(EnemyInstance.new(def))
 	_draw_pile = GameManager.dice_pool.duplicate()
@@ -56,7 +58,7 @@ func _do_draw() -> void:
 	player_block = GameManager.relic_value(RelicData.Effect.BLOCK_PER_TURN)
 	energy = MAX_ENERGY
 	_hand.clear()
-	_rolled.clear()
+	_context.clear()
 	for i in DRAW_COUNT:
 		var d := _draw_one()
 		if d != null:
@@ -85,13 +87,13 @@ func roll_index(index: int) -> bool:
 		return false
 	var die: DiceData = _hand[index]
 	energy -= die.energy_cost
-	_rolled[index] = die.roll()
+	_context.add(RollEntry.new(index, die, _rng.randf()))
 	dice_rolled.emit(_results())
 	return true
 
 
 func can_roll(index: int) -> bool:
-	if index < 0 or index >= _hand.size() or _rolled.has(index):
+	if index < 0 or index >= _hand.size() or _context.has_index(index):
 		return false
 	return energy >= (_hand[index] as DiceData).energy_cost
 
@@ -103,33 +105,35 @@ func cost_of(index: int) -> int:
 
 
 func is_rolled(index: int) -> bool:
-	return _rolled.has(index)
+	return _context.has_index(index)
 
 
 func any_rolled() -> bool:
-	return not _rolled.is_empty()
+	return not _context.is_empty()
 
 
 func face_for(index: int) -> FaceData:
-	return _rolled.get(index)
+	var e := _context.get_entry(index)
+	return e.base_face if e != null else null
 
 
-## 토큰 1개로 굴린 주사위 하나만 재굴림.
+## 토큰 1개로 굴린 주사위 하나만 재굴림 (해당 항목의 rng_token 재발급 → 재선택).
 func reroll_index(index: int) -> bool:
-	if not is_rolled(index):
+	var e := _context.get_entry(index)
+	if e == null:
 		return false
 	if not GameManager.spend_reroll_token():
 		return false
-	_rolled[index] = (_hand[index] as DiceData).roll()
+	e.reissue(_rng.randf())
 	dice_rolled.emit(_results())
 	return true
 
 
-## 굴린 주사위 결과 목록 {die, face}.
+## 굴린 주사위 결과 목록 {die, face} (UI/시그널용).
 func _results() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	for i in _rolled.keys():
-		out.append({"die": _hand[i], "face": _rolled[i]})
+	for e in _context.entries:
+		out.append({"die": e.die, "face": e.base_face})
 	return out
 
 
@@ -138,59 +142,9 @@ func confirm_turn() -> void:
 
 
 func _do_resolve() -> void:
-	var damage: int = 0
-	var block_gain: int = 0
-	var burn_to_apply: int = 0
-	var element_counts: Dictionary = {}
-
-	for r in _results():
-		var die: DiceData = r["die"]
-		var face: FaceData = r["face"]
-		match face.kind:
-			DiceData.FaceKind.NUMBER:
-				if die.dice_type == DiceData.DiceType.DEFENSE:
-					block_gain += face.value
-				else:
-					damage += face.value
-			DiceData.FaceKind.FIRE:
-				damage += face.value
-				burn_to_apply += 2
-				element_counts[face.kind] = element_counts.get(face.kind, 0) + 1
-			DiceData.FaceKind.ICE, DiceData.FaceKind.LIGHTNING:
-				damage += face.value
-				element_counts[face.kind] = element_counts.get(face.kind, 0) + 1
-			DiceData.FaceKind.CURSE:
-				GameManager.grant_reroll_tokens(GameManager.reroll_tokens + 1)
-				log_message.emit("저주 면: 리롤 토큰 +1")
-			DiceData.FaceKind.REROLL:
-				GameManager.grant_reroll_tokens(GameManager.reroll_tokens + 1)
-				log_message.emit("리롤 면: 리롤 토큰 +1")
-
 	var target := current_target()
-
-	if element_counts.get(DiceData.FaceKind.FIRE, 0) >= 2:
-		burn_to_apply += 3
-		log_message.emit("불 시너지: 화상 +3")
-	if target != null and element_counts.get(DiceData.FaceKind.ICE, 0) >= 2:
-		target.apply_weak(2)
-		log_message.emit("얼음 시너지: 약화 2턴")
-	if target != null and element_counts.get(DiceData.FaceKind.LIGHTNING, 0) >= 2:
-		target.apply_vulnerable(2)
-		log_message.emit("번개 시너지: 취약 2턴")
-
-	player_block += block_gain
-	if block_gain > 0:
-		log_message.emit("방어 +%d (현재 %d)" % [block_gain, player_block])
-
-	if target != null:
-		if burn_to_apply > 0:
-			burn_to_apply += GameManager.relic_value(RelicData.Effect.BURN_BOOST)
-			target.apply_burn(burn_to_apply)
-			log_message.emit("%s에게 화상 +%d" % [target.data.display_name, burn_to_apply])
-		if damage > 0:
-			var dealt := target.effective_damage(damage)
-			target.take_damage(damage)
-			log_message.emit("%s에게 %d 피해" % [target.data.display_name, dealt])
+	var outcome := _compute_outcome(target)
+	_apply_outcome(outcome, target)
 
 	for d in _hand:
 		_discard_pile.append(d)
@@ -199,6 +153,80 @@ func _do_resolve() -> void:
 		_win()
 	else:
 		_change_state(State.ENEMY_TURN)
+
+
+## 순수 정산: RollContext를 해석해 BattleOutcome 계산 (게임 상태 변경 없음).
+## 미리보기와 실제 적용이 이 함수를 공유한다.
+func _compute_outcome(target: EnemyInstance) -> BattleOutcome:
+	var o := BattleOutcome.new()
+	var counts: Dictionary = {}
+	for e in _context.entries:
+		var die: DiceData = e.die
+		var face: FaceData = e.base_face
+		match face.kind:
+			DiceData.FaceKind.NUMBER:
+				if die.dice_type == DiceData.DiceType.DEFENSE:
+					o.block += face.value
+				else:
+					o.damage += face.value
+			DiceData.FaceKind.FIRE:
+				o.damage += face.value
+				o.burn += 2
+				counts[face.kind] = counts.get(face.kind, 0) + 1
+			DiceData.FaceKind.ICE, DiceData.FaceKind.LIGHTNING:
+				o.damage += face.value
+				counts[face.kind] = counts.get(face.kind, 0) + 1
+			DiceData.FaceKind.CURSE:
+				o.token_gain += 1
+				o.logs.append("저주 면: 리롤 토큰 +1")
+			DiceData.FaceKind.REROLL:
+				o.token_gain += 1
+				o.logs.append("리롤 면: 리롤 토큰 +1")
+
+	# 시너지 (같은 속성 2개 이상)
+	if counts.get(DiceData.FaceKind.FIRE, 0) >= 2:
+		o.burn += 3
+		o.logs.append("불 시너지: 화상 +3")
+	if counts.get(DiceData.FaceKind.ICE, 0) >= 2:
+		o.apply_weak = 2
+		o.logs.append("얼음 시너지: 약화 2턴")
+	if counts.get(DiceData.FaceKind.LIGHTNING, 0) >= 2:
+		o.apply_vulnerable = 2
+		o.logs.append("번개 시너지: 취약 2턴")
+
+	# 유물: 화상 부여 시 강화
+	if o.burn > 0:
+		o.burn += GameManager.relic_value(RelicData.Effect.BURN_BOOST)
+
+	return o
+
+
+## 미리보기: 적용하지 않고 현재 타겟 기준 정산값만 반환 (Phase 2 예상 피해 표시용).
+func preview() -> BattleOutcome:
+	return _compute_outcome(current_target())
+
+
+## BattleOutcome을 실제 게임 상태에 적용 (확정 시 1회).
+func _apply_outcome(o: BattleOutcome, target: EnemyInstance) -> void:
+	for line in o.logs:
+		log_message.emit(line)
+	if o.token_gain > 0:
+		GameManager.grant_reroll_tokens(GameManager.reroll_tokens + o.token_gain)
+	player_block += o.block
+	if o.block > 0:
+		log_message.emit("방어 +%d (현재 %d)" % [o.block, player_block])
+	if target != null:
+		if o.apply_weak > 0:
+			target.apply_weak(o.apply_weak)
+		if o.apply_vulnerable > 0:
+			target.apply_vulnerable(o.apply_vulnerable)
+		if o.burn > 0:
+			target.apply_burn(o.burn)
+			log_message.emit("%s에게 화상 +%d" % [target.data.display_name, o.burn])
+		if o.damage > 0:
+			var dealt := target.effective_damage(o.damage)
+			target.take_damage(o.damage)
+			log_message.emit("%s에게 %d 피해" % [target.data.display_name, dealt])
 
 
 func _do_enemy_turn() -> void:
