@@ -5,20 +5,27 @@ extends Control
 func _ready() -> void:
 	theme = UITheme.shared()
 	var reward_box := $Center/RewardBox as VBoxContainer
-	_add_reward(reward_box, "주사위 강화: 숫자 면 +1", _reward_upgrade)
+	_add_reward(reward_box, "주사위 강화: 숫자 면 +1", _reward_upgrade, _tex("dice/basic_attack"))
 	_add_reward(reward_box, "체력 회복 +10", _reward_heal)
-	_add_reward(reward_box, "스킬 주사위 획득", _reward_new_die)
+	_add_reward(reward_box, "스킬 주사위 획득", _reward_new_die, _tex("dice/basic_skill"))
 
 	var relic := _random_unowned_relic()
 	if relic != null:
 		_add_reward(reward_box, "유물: %s - %s" % [relic.display_name, relic.description],
-			func(): GameManager.add_relic(relic))
+			func(): GameManager.add_relic(relic), _tex("relics/%s" % relic.id))
 
 
-func _add_reward(parent: VBoxContainer, text: String, callback: Callable) -> void:
+func _tex(frag: String) -> Texture2D:
+	return load("res://assets/sprites/%s.png" % frag) as Texture2D
+
+
+func _add_reward(parent: VBoxContainer, text: String, callback: Callable, icon: Texture2D = null) -> void:
 	var btn := Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(280, 44)
+	btn.custom_minimum_size = Vector2(360, 52)
+	if icon != null:
+		btn.icon = icon
+		btn.expand_icon = true
 	btn.pressed.connect(func():
 		callback.call()
 		SceneRouter.goto(SceneRouter.MAP)

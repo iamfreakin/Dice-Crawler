@@ -1,5 +1,11 @@
 extends Control
 ## BattleManager를 구동하고 전투 UI 입력/표시를 처리한다.
+## 플레이어 스프라이트/배경/배치는 씬(Battle.tscn)에서, 동적 요소(적/주사위)는 코드로.
+
+const ENEMY_SCALE := 3.0
+const ENEMY_MAX_H := 170.0  # 보스 등 큰 적이 화면(버튼)을 밀어내지 않도록 상한
+const INTENT_ICON := 32.0
+const DICE_BOX := 64.0
 
 var _bm: BattleManager
 var _has_rolled: bool = false
@@ -7,6 +13,7 @@ var _ended: bool = false
 var _victory: bool = false
 
 var _enemy_box: HBoxContainer
+var _dice_box: HBoxContainer
 var _player_label: Label
 var _hand_label: Label
 var _result_label: Label
@@ -71,6 +78,15 @@ func _bind_ui() -> void:
 	_confirm_btn.pressed.connect(_on_confirm_pressed)
 	_continue_btn.pressed.connect(_on_continue_pressed)
 
+	# 주사위 칩을 보여줄 가로 박스를 핸드 라벨 아래에 삽입
+	_hand_label.text = "내 주사위"
+	_dice_box = HBoxContainer.new()
+	_dice_box.add_theme_constant_override("separation", 12)
+	var root := $Root as VBoxContainer
+	root.add_child(_dice_box)
+	root.move_child(_dice_box, _hand_label.get_index() + 1)
+	_result_label.text = ""
+
 
 func _on_roll_pressed() -> void:
 	if _ended or _has_rolled:
@@ -93,22 +109,16 @@ func _on_confirm_pressed() -> void:
 
 func _on_hand_drawn(hand: Array) -> void:
 	_has_rolled = false
-	_result_label.text = ""
-	var names: Array[String] = []
+	var items: Array = []
 	for d in hand:
-		names.append(d.display_name)
-	_hand_label.text = "핸드: " + ", ".join(names)
+		items.append({"die": d, "face": null})
+	_render_dice(items)
 	_refresh()
 
 
 func _on_dice_rolled(results: Array) -> void:
 	_has_rolled = true
-	var parts: Array[String] = []
-	for r in results:
-		var die: DiceData = r["die"]
-		var face: FaceData = r["face"]
-		parts.append("%s: %s" % [die.display_name, face.label])
-	_result_label.text = "결과: " + "   ".join(parts)
+	_render_dice(results)
 	_refresh()
 
 
@@ -138,6 +148,61 @@ func _append_log(text: String) -> void:
 	_log.append_text(text + "\n")
 
 
+# --- 주사위 칩 ----------------------------------------------------------
+## items: [{die: DiceData, face: FaceData|null}, ...]
+func _render_dice(items: Array) -> void:
+	for c in _dice_box.get_children():
+		c.queue_free()
+	for it in items:
+		_dice_box.add_child(_dice_chip(it["die"], it.get("face")))
+
+
+func _dice_chip(die: DiceData, face) -> Control:
+	var box := Control.new()
+	box.custom_minimum_size = Vector2(DICE_BOX, DICE_BOX)
+	box.size = Vector2(DICE_BOX, DICE_BOX)
+
+	var body := load("res://assets/sprites/dice/%s.png" % die.id) as Texture2D
+	if body != null:
+		box.add_child(_centered(body))
+
+	if face != null:
+		if face.kind == DiceData.FaceKind.NUMBER:
+			var lbl := Label.new()
+			lbl.text = str(face.value)
+			lbl.add_theme_font_size_override("font_size", 30)
+			lbl.size = Vector2(DICE_BOX, DICE_BOX)
+			lbl.position = Vector2.ZERO
+			lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			box.add_child(lbl)
+		else:
+			var ftex := load("res://assets/sprites/faces/%s.png" % _face_name(face.kind)) as Texture2D
+			if ftex != null:
+				box.add_child(_centered(ftex))
+	return box
+
+
+func _centered(tex: Texture2D) -> TextureRect:
+	var tr := TextureRect.new()
+	tr.texture = tex
+	tr.position = ((Vector2(DICE_BOX, DICE_BOX) - tex.get_size()) * 0.5).round()
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tr
+
+
+func _face_name(kind: DiceData.FaceKind) -> String:
+	match kind:
+		DiceData.FaceKind.FIRE: return "fire"
+		DiceData.FaceKind.ICE: return "ice"
+		DiceData.FaceKind.LIGHTNING: return "lightning"
+		DiceData.FaceKind.CURSE: return "curse"
+		DiceData.FaceKind.REROLL: return "reroll"
+	return ""
+
+
+# --- 표시 갱신 ----------------------------------------------------------
 func _refresh() -> void:
 	_refresh_enemies()
 	_player_label.text = "플레이어 HP: %d/%d   방어: %d   리롤: %d   골드: %d" % [
@@ -174,7 +239,7 @@ func _refresh_enemies() -> void:
 			btn.text = "%s 처치됨" % e.data.display_name
 			btn.disabled = true
 		else:
-			var prefix := "> " if e == target else ""
+			var prefix := "▶ " if e == target else ""
 			var status := e.status_text()
 			var status_part := ("  [%s]" % status) if status != "" else ""
 			btn.text = "%s%s  HP %d/%d  방어 %d%s" % [
@@ -191,7 +256,9 @@ func _make_enemy_sprite(e: EnemyInstance) -> TextureRect:
 		return null
 	var tr := TextureRect.new()
 	tr.texture = tex
-	tr.custom_minimum_size = tex.get_size() * 3.0
+	# 3배 확대하되 최대 높이를 넘지 않게 (보스가 화면을 넘겨 버튼이 가려지는 문제 방지)
+	var scale := minf(ENEMY_SCALE, ENEMY_MAX_H / tex.get_size().y)
+	tr.custom_minimum_size = tex.get_size() * scale
 	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	tr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	if e.is_dead():
@@ -220,23 +287,18 @@ func _make_intent_icon(intent: IntentData) -> TextureRect:
 		return null
 	var tr := TextureRect.new()
 	tr.texture = tex
-	tr.custom_minimum_size = Vector2(24, 24)
+	tr.custom_minimum_size = Vector2(INTENT_ICON, INTENT_ICON)
 	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	return tr
 
 
 func _intent_kind_name(kind: IntentData.IntentKind) -> String:
 	match kind:
-		IntentData.IntentKind.CHARGE:
-			return "charge"
-		IntentData.IntentKind.SNIPE:
-			return "snipe"
-		IntentData.IntentKind.EXPLODE:
-			return "explode"
-		IntentData.IntentKind.REINFORCE:
-			return "reinforce"
-		IntentData.IntentKind.SUMMON:
-			return "summon"
+		IntentData.IntentKind.CHARGE: return "charge"
+		IntentData.IntentKind.SNIPE: return "snipe"
+		IntentData.IntentKind.EXPLODE: return "explode"
+		IntentData.IntentKind.REINFORCE: return "reinforce"
+		IntentData.IntentKind.SUMMON: return "summon"
 	return ""
 
 

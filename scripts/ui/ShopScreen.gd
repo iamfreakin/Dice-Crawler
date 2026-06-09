@@ -13,7 +13,10 @@ func _ready() -> void:
 	_generate_stock()
 	for item in _items:
 		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(320, 40)
+		btn.custom_minimum_size = Vector2(360, 52)
+		if item["icon"] != null:
+			btn.icon = item["icon"]
+			btn.expand_icon = true
 		btn.pressed.connect(_on_buy.bind(item))
 		item["btn"] = btn
 		_items_box.add_child(btn)
@@ -25,20 +28,24 @@ func _ready() -> void:
 
 
 func _generate_stock() -> void:
-	_add_item("스킬 주사위", 30, func(): GameManager.dice_pool.append(StarterDeck.skill_die()))
-	_add_item("공격 주사위", 25, func(): GameManager.dice_pool.append(StarterDeck.attack_die()))
-	_add_item("방어 주사위", 25, func(): GameManager.dice_pool.append(StarterDeck.defense_die()))
+	_add_item("스킬 주사위", 30, func(): GameManager.dice_pool.append(StarterDeck.skill_die()), _tex("dice/basic_skill"))
+	_add_item("공격 주사위", 25, func(): GameManager.dice_pool.append(StarterDeck.attack_die()), _tex("dice/basic_attack"))
+	_add_item("방어 주사위", 25, func(): GameManager.dice_pool.append(StarterDeck.defense_die()), _tex("dice/basic_defense"))
 
 	var relic := _random_unowned_relic()
 	if relic != null:
 		_add_item("유물: %s - %s" % [relic.display_name, relic.description], 65,
-			func(): GameManager.add_relic(relic))
+			func(): GameManager.add_relic(relic), _tex("relics/%s" % relic.id))
 
 	_add_item("체력 회복 +20", 20, func(): GameManager.heal(20))
 
 
-func _add_item(label: String, cost: int, action: Callable) -> void:
-	_items.append({"label": label, "cost": cost, "action": action, "sold": false, "btn": null})
+func _tex(frag: String) -> Texture2D:
+	return load("res://assets/sprites/%s.png" % frag) as Texture2D
+
+
+func _add_item(label: String, cost: int, action: Callable, icon: Texture2D = null) -> void:
+	_items.append({"label": label, "cost": cost, "action": action, "sold": false, "btn": null, "icon": icon})
 
 
 func _on_buy(item: Dictionary) -> void:

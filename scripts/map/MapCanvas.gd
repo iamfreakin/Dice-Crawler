@@ -25,6 +25,10 @@ var _centers: Dictionary = {}        # node id -> 중심 좌표
 var _widgets: Array[Dictionary] = []
 var _did_appear: bool = false
 
+## 특정 노드의 중심 좌표 (배치 후 유효). 없으면 ZERO.
+func node_center(id: int) -> Vector2:
+	return _centers.get(id, Vector2.ZERO)
+
 func setup(map: Array, available_ids: Array[int], current_id: int) -> void:
 	_map = map
 	_available = available_ids
