@@ -108,7 +108,10 @@ res://
       BattleOutcome, 정산을 순수 _compute_outcome + _apply_outcome로 분리, preview() 공개
       (동작 동일, Phase 2 예상피해 / Phase 3 면조각의 토대)
 - [x] (Phase 2 정보전달) preview() 연결 — 확정 시 예상 피해/방어/효과 실시간 표시,
-      적 의도 "막고 나면 -HP" 미리 계산, 적 상태이상 툴팁
+      적 의도 "막고 나면 -HP" 미리 계산(약화·적 방어·죽을 적 제외 반영), 적 상태이상 툴팁
+      → dealt=실제 HP감소(취약·적방어·HP캡), preview/로그/take_damage 값 통일 (예상=실제 보장)
+- [x] (Phase 3-A 토대) FaceData를 tags + effects(timing) 모델로 전환,
+      순수 EffectResolver 도입 + 기존 숫자/속성/토큰 면 .tres 이관(동작 보존 테스트)
 - [~] 비주얼 패스 (진행 중) — 화풍 픽셀아트, 에셋 전부 수령(assets/sprites)
       - [x] 코드 전역 테마(UITheme) + 다크 배경
       - [x] 픽셀 에셋 연결 1: 화면 배경, 적/플레이어 스프라이트, 의도 아이콘(32)

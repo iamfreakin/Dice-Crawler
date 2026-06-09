@@ -1,41 +1,87 @@
-[gd_resource type="Resource" script_class="DiceData" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="DiceData" load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/FaceData.gd" id="1_face"]
 [ext_resource type="Script" path="res://scripts/data/DiceData.gd" id="2_dice"]
+[ext_resource type="Script" path="res://scripts/data/FaceEffectData.gd" id="3_effect"]
+
+[sub_resource type="Resource" id="Effect_skl_fire_damage"]
+script = ExtResource("3_effect")
+use_face_value = true
+
+[sub_resource type="Resource" id="Effect_skl_fire_burn"]
+script = ExtResource("3_effect")
+effect_type = 2
+value = 2
 
 [sub_resource type="Resource" id="Face_skl_fire"]
 script = ExtResource("1_face")
 kind = 1
+tags = Array[int]([1])
+effects = [SubResource("Effect_skl_fire_damage"), SubResource("Effect_skl_fire_burn")]
 value = 3
 label = "🔥3"
+
+[sub_resource type="Resource" id="Effect_skl_ice_damage"]
+script = ExtResource("3_effect")
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_skl_ice"]
 script = ExtResource("1_face")
 kind = 2
+tags = Array[int]([2])
+effects = [SubResource("Effect_skl_ice_damage")]
 value = 3
 label = "❄️3"
+
+[sub_resource type="Resource" id="Effect_skl_light_damage"]
+script = ExtResource("3_effect")
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_skl_light"]
 script = ExtResource("1_face")
 kind = 3
+tags = Array[int]([3])
+effects = [SubResource("Effect_skl_light_damage")]
 value = 3
 label = "⚡3"
+
+[sub_resource type="Resource" id="Effect_skl_curse_token"]
+script = ExtResource("3_effect")
+effect_type = 3
+value = 1
+log_text = "저주 면: 리롤 토큰 +1"
 
 [sub_resource type="Resource" id="Face_skl_curse"]
 script = ExtResource("1_face")
 kind = 4
+tags = Array[int]([4])
+effects = [SubResource("Effect_skl_curse_token")]
 value = 0
 label = "💀"
+
+[sub_resource type="Resource" id="Effect_skl_reroll_token"]
+script = ExtResource("3_effect")
+effect_type = 3
+value = 1
+log_text = "리롤 면: 리롤 토큰 +1"
 
 [sub_resource type="Resource" id="Face_skl_reroll"]
 script = ExtResource("1_face")
 kind = 5
+tags = Array[int]([5])
+effects = [SubResource("Effect_skl_reroll_token")]
 value = 0
 label = "🔄"
+
+[sub_resource type="Resource" id="Effect_skl_num_damage"]
+script = ExtResource("3_effect")
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_skl_num"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_skl_num_damage")]
 value = 2
 label = "2"
 

@@ -6,7 +6,8 @@ extends Resource
 ## 주사위 속성(타입). 시너지 판정의 기준이 된다.
 enum DiceType { ATTACK, DEFENSE, SKILL }
 
-## 면에 실릴 수 있는 효과 종류.
+## 면의 대표 태그. UI 아이콘과 기존 시너지 식별에 사용한다.
+## 실제 행동은 FaceData.effects의 FaceEffectData가 정의한다.
 enum FaceKind {
 	NUMBER,   # 숫자 면 (데미지/실드 등 수치)
 	FIRE,     # 🔥

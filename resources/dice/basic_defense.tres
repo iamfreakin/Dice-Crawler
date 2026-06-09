@@ -1,41 +1,84 @@
-[gd_resource type="Resource" script_class="DiceData" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="DiceData" load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/FaceData.gd" id="1_face"]
 [ext_resource type="Script" path="res://scripts/data/DiceData.gd" id="2_dice"]
+[ext_resource type="Script" path="res://scripts/data/FaceEffectData.gd" id="3_effect"]
+
+[sub_resource type="Resource" id="Effect_def_1"]
+script = ExtResource("3_effect")
+effect_type = 1
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_def_1"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_def_1")]
 value = 1
 label = "1"
+
+[sub_resource type="Resource" id="Effect_def_2"]
+script = ExtResource("3_effect")
+effect_type = 1
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_def_2"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_def_2")]
 value = 2
 label = "2"
+
+[sub_resource type="Resource" id="Effect_def_3"]
+script = ExtResource("3_effect")
+effect_type = 1
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_def_3"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_def_3")]
 value = 3
 label = "3"
+
+[sub_resource type="Resource" id="Effect_def_4"]
+script = ExtResource("3_effect")
+effect_type = 1
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_def_4"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_def_4")]
 value = 4
 label = "4"
+
+[sub_resource type="Resource" id="Effect_def_5"]
+script = ExtResource("3_effect")
+effect_type = 1
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_def_5"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_def_5")]
 value = 5
 label = "5"
+
+[sub_resource type="Resource" id="Effect_def_6"]
+script = ExtResource("3_effect")
+effect_type = 1
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_def_6"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_def_6")]
 value = 6
 label = "6"
 

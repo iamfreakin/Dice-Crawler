@@ -161,27 +161,15 @@ func _compute_outcome(target: EnemyInstance) -> BattleOutcome:
 	var o := BattleOutcome.new()
 	var counts: Dictionary = {}
 	for e in _context.entries:
-		var die: DiceData = e.die
 		var face: FaceData = e.base_face
-		match face.kind:
-			DiceData.FaceKind.NUMBER:
-				if die.dice_type == DiceData.DiceType.DEFENSE:
-					o.block += face.value
-				else:
-					o.damage += face.value
-			DiceData.FaceKind.FIRE:
-				o.damage += face.value
-				o.burn += 2
-				counts[face.kind] = counts.get(face.kind, 0) + 1
-			DiceData.FaceKind.ICE, DiceData.FaceKind.LIGHTNING:
-				o.damage += face.value
-				counts[face.kind] = counts.get(face.kind, 0) + 1
-			DiceData.FaceKind.CURSE:
-				o.token_gain += 1
-				o.logs.append("저주 면: 리롤 토큰 +1")
-			DiceData.FaceKind.REROLL:
-				o.token_gain += 1
-				o.logs.append("리롤 면: 리롤 토큰 +1")
+		EffectResolver.resolve_face(e.die, face, FaceEffectData.Timing.ON_CONFIRM, o)
+		for tag in [
+			DiceData.FaceKind.FIRE,
+			DiceData.FaceKind.ICE,
+			DiceData.FaceKind.LIGHTNING,
+		]:
+			if face.has_tag(tag):
+				counts[tag] = counts.get(tag, 0) + 1
 
 	# 시너지 (같은 속성 2개 이상)
 	if counts.get(DiceData.FaceKind.FIRE, 0) >= 2:

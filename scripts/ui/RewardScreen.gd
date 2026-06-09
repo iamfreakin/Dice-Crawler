@@ -37,7 +37,7 @@ func _reward_upgrade() -> void:
 	var candidates: Array[FaceData] = []
 	for d in GameManager.dice_pool:
 		for f in d.faces:
-			if f.kind == DiceData.FaceKind.NUMBER:
+			if f.has_tag(DiceData.FaceKind.NUMBER):
 				candidates.append(f)
 	if candidates.is_empty():
 		return

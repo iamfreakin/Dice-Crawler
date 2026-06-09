@@ -1,41 +1,78 @@
-[gd_resource type="Resource" script_class="DiceData" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="DiceData" load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/FaceData.gd" id="1_face"]
 [ext_resource type="Script" path="res://scripts/data/DiceData.gd" id="2_dice"]
+[ext_resource type="Script" path="res://scripts/data/FaceEffectData.gd" id="3_effect"]
+
+[sub_resource type="Resource" id="Effect_atk_1"]
+script = ExtResource("3_effect")
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_atk_1"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_atk_1")]
 value = 1
 label = "1"
+
+[sub_resource type="Resource" id="Effect_atk_2"]
+script = ExtResource("3_effect")
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_atk_2"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_atk_2")]
 value = 2
 label = "2"
+
+[sub_resource type="Resource" id="Effect_atk_3"]
+script = ExtResource("3_effect")
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_atk_3"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_atk_3")]
 value = 3
 label = "3"
+
+[sub_resource type="Resource" id="Effect_atk_4"]
+script = ExtResource("3_effect")
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_atk_4"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_atk_4")]
 value = 4
 label = "4"
+
+[sub_resource type="Resource" id="Effect_atk_5"]
+script = ExtResource("3_effect")
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_atk_5"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_atk_5")]
 value = 5
 label = "5"
+
+[sub_resource type="Resource" id="Effect_atk_6"]
+script = ExtResource("3_effect")
+use_face_value = true
 
 [sub_resource type="Resource" id="Face_atk_6"]
 script = ExtResource("1_face")
 kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_atk_6")]
 value = 6
 label = "6"
 
