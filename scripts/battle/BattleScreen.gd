@@ -117,6 +117,7 @@ func _on_battle_ended(victory: bool) -> void:
 	_ended = true
 	_victory = victory
 	_result_label.text = "승리!" if victory else "패배..."
+	_roll_btn.visible = false
 	_reroll_btn.visible = false
 	_confirm_btn.visible = false
 	_continue_btn.visible = true
@@ -142,34 +143,22 @@ func _append_log(text: String) -> void:
 func _render_hand() -> void:
 	for c in _dice_box.get_children():
 		c.queue_free()
-	_hand_label.text = "주사위를 클릭해 에너지로 굴리세요 (에너지 %d/%d)" % [
+	_hand_label.text = "주사위를 클릭해 굴리세요 (에너지 %d/%d)" % [
 		_bm.energy if _bm else 0, BattleManager.MAX_ENERGY
 	]
 	for i in _hand.size():
-		_dice_box.add_child(_hand_chip(i))
+		_dice_box.add_child(_dice_chip(i))
 
 
-func _hand_chip(index: int) -> Control:
+## 클릭 = 즉시 굴림(에너지 소모). 굴린 주사위는 면 결과 + 액센트 바.
+func _dice_chip(index: int) -> Control:
 	var die: DiceData = _hand[index]
-	var box := Control.new()
-	box.custom_minimum_size = Vector2(DICE_BOX, DICE_BOX)
-	box.size = Vector2(DICE_BOX, DICE_BOX)
-
-	var body := load("res://assets/sprites/dice/%s.png" % die.id) as Texture2D
-	if body != null:
-		box.add_child(_centered(body))
+	var box := _dice_base(die)
 
 	if _bm.is_rolled(index):
 		_overlay_face(box, _bm.face_for(index))
-		# 굴린 주사위 표시: 하단 액센트 바
-		var bar := ColorRect.new()
-		bar.color = Color("efc127")
-		bar.size = Vector2(DICE_BOX, 5)
-		bar.position = Vector2(0, DICE_BOX - 5)
-		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(bar)
+		box.add_child(_accent_bar())
 	else:
-		# 비용 배지 (좌상단)
 		box.add_child(_cost_badge(die.energy_cost))
 		if _bm.can_roll(index):
 			box.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -179,6 +168,25 @@ func _hand_chip(index: int) -> Control:
 		else:
 			box.modulate = Color(0.45, 0.45, 0.5)  # 에너지 부족
 	return box
+
+
+func _dice_base(die: DiceData) -> Control:
+	var box := Control.new()
+	box.custom_minimum_size = Vector2(DICE_BOX, DICE_BOX)
+	box.size = Vector2(DICE_BOX, DICE_BOX)
+	var body := load("res://assets/sprites/dice/%s.png" % die.id) as Texture2D
+	if body != null:
+		box.add_child(_centered(body))
+	return box
+
+
+func _accent_bar() -> ColorRect:
+	var bar := ColorRect.new()
+	bar.color = Color("efc127")
+	bar.size = Vector2(DICE_BOX, 5)
+	bar.position = Vector2(0, DICE_BOX - 5)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return bar
 
 
 func _overlay_face(box: Control, face: FaceData) -> void:

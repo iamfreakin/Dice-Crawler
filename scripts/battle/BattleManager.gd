@@ -79,7 +79,7 @@ func _reshuffle() -> void:
 	_draw_pile.shuffle()
 
 
-## 핸드 index의 주사위를 굴린다. 에너지가 충분하고 아직 안 굴렸으면 성공.
+## 핸드 index의 주사위를 즉시 굴린다 (에너지 소모). 적응형: 하나씩 보고 다음을 결정.
 func roll_index(index: int) -> bool:
 	if not can_roll(index):
 		return false
@@ -94,6 +94,12 @@ func can_roll(index: int) -> bool:
 	if index < 0 or index >= _hand.size() or _rolled.has(index):
 		return false
 	return energy >= (_hand[index] as DiceData).energy_cost
+
+
+func cost_of(index: int) -> int:
+	if index < 0 or index >= _hand.size():
+		return 0
+	return (_hand[index] as DiceData).energy_cost
 
 
 func is_rolled(index: int) -> bool:
