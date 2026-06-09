@@ -57,7 +57,7 @@ func _encounter() -> Array[EnemyData]:
 
 
 func _bind_ui() -> void:
-	_enemy_box = $Root/EnemyBox as HBoxContainer
+	_enemy_box = $Root/Arena/EnemyBox as HBoxContainer
 	_log = $Root/Log as RichTextLabel
 	_player_label = $Root/PlayerLabel as Label
 	_hand_label = $Root/HandLabel as Label
