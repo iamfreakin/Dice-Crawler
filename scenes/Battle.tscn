@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/BattleScreen.gd" id="1_battle"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/bg_battle.png" id="2_bg"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font_size = 24
 
 [node name="Battle" type="Control"]
 layout_mode = 3
@@ -10,3 +14,84 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_battle")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_bg")
+stretch_mode = 0
+
+[node name="Root" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 30.0
+offset_right = -40.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Root"]
+layout_mode = 2
+text = "Dice Crawler - 전투"
+label_settings = SubResource("LabelSettings_title")
+
+[node name="EnemyHint" type="Label" parent="Root"]
+layout_mode = 2
+text = "적을 클릭해서 공격 대상을 선택하세요."
+
+[node name="EnemyBox" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="SeparatorA" type="HSeparator" parent="Root"]
+layout_mode = 2
+
+[node name="Log" type="RichTextLabel" parent="Root"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_following = true
+
+[node name="SeparatorB" type="HSeparator" parent="Root"]
+layout_mode = 2
+
+[node name="PlayerLabel" type="Label" parent="Root"]
+layout_mode = 2
+
+[node name="HandLabel" type="Label" parent="Root"]
+layout_mode = 2
+
+[node name="ResultLabel" type="Label" parent="Root"]
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="RollButton" type="Button" parent="Root/Buttons"]
+layout_mode = 2
+text = "굴리기"
+
+[node name="RerollButton" type="Button" parent="Root/Buttons"]
+layout_mode = 2
+text = "리롤"
+
+[node name="ConfirmButton" type="Button" parent="Root/Buttons"]
+layout_mode = 2
+text = "확정"
+
+[node name="ContinueButton" type="Button" parent="Root/Buttons"]
+visible = false
+layout_mode = 2
+text = "계속"

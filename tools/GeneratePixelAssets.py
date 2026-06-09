@@ -252,6 +252,72 @@ def make_dice() -> None:
         save(image, "dice", name)
 
 
+def make_map_icons() -> None:
+    image, d = canvas(32, 32)
+    polygon(d, [(18, 3), (22, 7), (17, 20), (21, 24), (18, 27), (14, 23), (8, 27), (5, 24), (12, 18)], INK)
+    polygon(d, [(18, 5), (20, 7), (15, 21), (12, 18)], HILITE)
+    rect(d, (10, 19, 19, 22), UNIQUE)
+    rect(d, (7, 23, 12, 25), COMMON)
+    save(image, "map", "node_battle")
+
+    image, d = canvas(32, 32)
+    bordered_rect(d, (7, 7, 24, 22), COMMON)
+    rect(d, (5, 11, 8, 17), INK)
+    rect(d, (23, 11, 26, 17), INK)
+    rect(d, (10, 12, 13, 15), INK)
+    rect(d, (18, 12, 21, 15), INK)
+    polygon(d, [(13, 18), (16, 16), (19, 18), (18, 21), (14, 21)], INK)
+    rect(d, (9, 22, 22, 26), INK)
+    rect(d, (11, 22, 13, 24), HILITE)
+    rect(d, (15, 22, 17, 24), HILITE)
+    rect(d, (19, 22, 21, 24), HILITE)
+    save(image, "map", "node_elite")
+
+    image, d = canvas(32, 32)
+    rect(d, (7, 24, 24, 27), INK)
+    line(d, [(8, 25), (23, 20)], "#6a3d24", 3)
+    line(d, [(9, 20), (23, 25)], "#7c4a2d", 3)
+    polygon(d, [(16, 4), (23, 13), (21, 23), (10, 23), (7, 15), (12, 10)], INK)
+    polygon(d, [(16, 6), (21, 14), (19, 21), (12, 21), (9, 15), (13, 11)], FIRE)
+    polygon(d, [(16, 11), (19, 16), (17, 21), (13, 20), (12, 16)], LIGHTNING)
+    save(image, "map", "node_rest")
+
+    image, d = canvas(32, 32)
+    rect(d, (6, 6, 25, 20), INK)
+    rect(d, (8, 8, 23, 18), UNIQUE)
+    rect(d, (10, 10, 21, 12), HILITE)
+    rect(d, (14, 20, 17, 28), INK)
+    rect(d, (15, 20, 16, 27), COMMON)
+    polygon(d, [(9, 19), (23, 19), (21, 25), (11, 25)], INK)
+    polygon(d, [(11, 20), (21, 20), (19, 23), (13, 23)], "#8f6b32")
+    save(image, "map", "node_shop")
+
+    image, d = canvas(32, 32)
+    polygon(d, [(4, 9), (10, 15), (15, 7), (21, 15), (27, 9), (24, 24), (7, 24)], INK)
+    polygon(d, [(6, 11), (11, 17), (15, 10), (20, 17), (25, 11), (22, 22), (9, 22)], LIGHTNING)
+    rect(d, (9, 18, 22, 21), UNIQUE)
+    rect(d, (13, 13, 17, 17), HILITE)
+    save(image, "map", "node_boss")
+
+    image, d = canvas(40, 40)
+    d.ellipse((3, 3, 36, 36), fill=rgba(INK))
+    d.ellipse((6, 6, 33, 33), fill=rgba("#343440"))
+    d.ellipse((10, 10, 29, 29), fill=rgba(PANEL))
+    save(image, "map", "node_frame")
+
+    image, d = canvas(48, 48)
+    d.ellipse((3, 3, 44, 44), outline=rgba(INK), width=3)
+    d.ellipse((6, 6, 41, 41), outline=rgba(ACCENT), width=2)
+    for x, y in [(22, 1), (22, 44), (1, 22), (44, 22), (7, 7), (38, 7), (7, 38), (38, 38)]:
+        rect(d, (x, y, x + 3, y + 3), HILITE)
+    save(image, "map", "node_ring")
+
+    image, d = canvas(8, 8)
+    rect(d, (1, 1, 6, 6), INK)
+    rect(d, (2, 2, 5, 5), ACCENT)
+    save(image, "map", "path_dot")
+
+
 def make_backgrounds() -> None:
     for name in ["bg_battle", "bg_map", "bg_menu"]:
         image, d = canvas(320, 180, transparent=False)
@@ -266,10 +332,11 @@ def make_backgrounds() -> None:
             polygon(d, [(130, 122), (216, 59), (300, 123)], "#292632")
             rect(d, (0, 122, 319, 124), ACCENT, 90)
         elif name == "bg_map":
-            for i, x in enumerate(range(20, 310, 42)):
-                rect(d, (x, 36 + (i % 4) * 16, x + 4, 40 + (i % 4) * 16), ACCENT)
-                line(d, [(x + 2, 40 + (i % 4) * 16), (x + 22, 56 + ((i + 1) % 4) * 16)], "#38354b")
-            rect(d, (0, 140, 319, 179), PANEL)
+            polygon(d, [(0, 134), (48, 91), (91, 127), (142, 69), (196, 126), (255, 82), (319, 128), (319, 179), (0, 179)], "#20202a")
+            polygon(d, [(0, 151), (68, 112), (121, 151), (184, 102), (238, 147), (287, 115), (319, 139), (319, 179), (0, 179)], "#292834")
+            for x, y in [(28, 31), (76, 54), (126, 24), (181, 45), (235, 27), (286, 59)]:
+                rect(d, (x, y, x + 1, y + 1), ACCENT, 110)
+            rect(d, (0, 153, 319, 179), PANEL)
         elif name == "bg_menu":
             rect(d, (98, 45, 221, 124), PANEL)
             rect(d, (103, 50, 216, 119), "#272633")
@@ -288,6 +355,7 @@ def main() -> None:
     make_intents()
     make_faces()
     make_dice()
+    make_map_icons()
     make_backgrounds()
 
 

@@ -3,48 +3,23 @@ extends Control
 
 var _items: Array[Dictionary] = []
 var _gold_label: Label
+var _items_box: VBoxContainer
 
 
 func _ready() -> void:
 	theme = UITheme.shared()
-	UITheme.add_background(self, "res://assets/sprites/ui/bg_map.png")
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
-
-	var vbox := VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 12)
-	center.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "상점"
-	title.add_theme_font_size_override("font_size", 28)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(title)
-
-	_gold_label = Label.new()
-	_gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(_gold_label)
-
-	vbox.add_child(HSeparator.new())
-
+	_gold_label = $Center/ShopBox/GoldLabel as Label
+	_items_box = $Center/ShopBox/ItemsBox as VBoxContainer
 	_generate_stock()
 	for item in _items:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(320, 40)
 		btn.pressed.connect(_on_buy.bind(item))
 		item["btn"] = btn
-		vbox.add_child(btn)
+		_items_box.add_child(btn)
 
-	vbox.add_child(HSeparator.new())
-
-	var leave := Button.new()
-	leave.text = "상점 나가기"
-	leave.custom_minimum_size = Vector2(320, 40)
+	var leave := $Center/ShopBox/LeaveButton as Button
 	leave.pressed.connect(func(): SceneRouter.goto(SceneRouter.MAP))
-	vbox.add_child(leave)
 
 	_refresh()
 

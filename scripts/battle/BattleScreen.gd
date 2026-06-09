@@ -19,10 +19,9 @@ var _continue_btn: Button
 
 func _ready() -> void:
 	theme = UITheme.shared()
-	UITheme.add_background(self, "res://assets/sprites/ui/bg_battle.png")
 	if GameManager.dice_pool.is_empty():
 		GameManager.start_new_run()
-	_build_ui()
+	_bind_ui()
 
 	_bm = BattleManager.new()
 	add_child(_bm)
@@ -57,74 +56,20 @@ func _encounter() -> Array[EnemyData]:
 	return list
 
 
-func _build_ui() -> void:
-	var root := VBoxContainer.new()
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 40
-	root.offset_top = 30
-	root.offset_right = -40
-	root.offset_bottom = -30
-	root.add_theme_constant_override("separation", 10)
-	add_child(root)
-
-	var title := Label.new()
-	title.text = "Dice Crawler - 전투"
-	title.add_theme_font_size_override("font_size", 24)
-	root.add_child(title)
-
-	var enemy_hint := Label.new()
-	enemy_hint.text = "적을 클릭해서 공격 대상을 선택하세요."
-	root.add_child(enemy_hint)
-
-	_enemy_box = HBoxContainer.new()
-	_enemy_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	_enemy_box.add_theme_constant_override("separation", 24)
-	root.add_child(_enemy_box)
-
-	root.add_child(HSeparator.new())
-
-	_log = RichTextLabel.new()
-	_log.bbcode_enabled = true
-	_log.scroll_following = true
-	_log.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(_log)
-
-	root.add_child(HSeparator.new())
-
-	_player_label = Label.new()
-	root.add_child(_player_label)
-
-	_hand_label = Label.new()
-	root.add_child(_hand_label)
-
-	_result_label = Label.new()
-	_result_label.add_theme_font_size_override("font_size", 18)
-	root.add_child(_result_label)
-
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 10)
-	root.add_child(buttons)
-
-	_roll_btn = Button.new()
-	_roll_btn.text = "굴리기"
+func _bind_ui() -> void:
+	_enemy_box = $Root/EnemyBox as HBoxContainer
+	_log = $Root/Log as RichTextLabel
+	_player_label = $Root/PlayerLabel as Label
+	_hand_label = $Root/HandLabel as Label
+	_result_label = $Root/ResultLabel as Label
+	_roll_btn = $Root/Buttons/RollButton as Button
+	_reroll_btn = $Root/Buttons/RerollButton as Button
+	_confirm_btn = $Root/Buttons/ConfirmButton as Button
+	_continue_btn = $Root/Buttons/ContinueButton as Button
 	_roll_btn.pressed.connect(_on_roll_pressed)
-	buttons.add_child(_roll_btn)
-
-	_reroll_btn = Button.new()
-	_reroll_btn.text = "리롤"
 	_reroll_btn.pressed.connect(_on_reroll_pressed)
-	buttons.add_child(_reroll_btn)
-
-	_confirm_btn = Button.new()
-	_confirm_btn.text = "확정"
 	_confirm_btn.pressed.connect(_on_confirm_pressed)
-	buttons.add_child(_confirm_btn)
-
-	_continue_btn = Button.new()
-	_continue_btn.text = "계속"
-	_continue_btn.visible = false
 	_continue_btn.pressed.connect(_on_continue_pressed)
-	buttons.add_child(_continue_btn)
 
 
 func _on_roll_pressed() -> void:

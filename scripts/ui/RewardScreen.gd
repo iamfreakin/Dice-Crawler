@@ -4,30 +4,14 @@ extends Control
 
 func _ready() -> void:
 	theme = UITheme.shared()
-	UITheme.add_background(self, "res://assets/sprites/ui/bg_battle.png")
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
-
-	var vbox := VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 14)
-	center.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "보상 선택"
-	title.add_theme_font_size_override("font_size", 28)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(title)
-
-	_add_reward(vbox, "주사위 강화: 숫자 면 +1", _reward_upgrade)
-	_add_reward(vbox, "체력 회복 +10", _reward_heal)
-	_add_reward(vbox, "스킬 주사위 획득", _reward_new_die)
+	var reward_box := $Center/RewardBox as VBoxContainer
+	_add_reward(reward_box, "주사위 강화: 숫자 면 +1", _reward_upgrade)
+	_add_reward(reward_box, "체력 회복 +10", _reward_heal)
+	_add_reward(reward_box, "스킬 주사위 획득", _reward_new_die)
 
 	var relic := _random_unowned_relic()
 	if relic != null:
-		_add_reward(vbox, "유물: %s - %s" % [relic.display_name, relic.description],
+		_add_reward(reward_box, "유물: %s - %s" % [relic.display_name, relic.description],
 			func(): GameManager.add_relic(relic))
 
 

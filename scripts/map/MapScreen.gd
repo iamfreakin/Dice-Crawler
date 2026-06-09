@@ -1,52 +1,41 @@
 extends Control
-## 런 맵 화면. 이동 가능한 노드만 선택할 수 있다.
+## 런 맵 화면. 좌표 기반 MapCanvas 를 구동하고, 노드 선택을 라우팅한다.
 
 const REST_HEAL: int = 12
 
-var _rows_box: VBoxContainer
 var _status_label: Label
+var _scroll: ScrollContainer
+var _canvas: MapCanvas
 
 
 func _ready() -> void:
 	theme = UITheme.shared()
-	UITheme.add_background(self, "res://assets/sprites/ui/bg_map.png")
-
-	var root := VBoxContainer.new()
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 40
-	root.offset_top = 24
-	root.offset_right = -40
-	root.offset_bottom = -24
-	root.add_theme_constant_override("separation", 8)
-	add_child(root)
-
-	var title := Label.new()
-	title.text = "맵 - 다음 목적지를 선택하세요"
-	title.add_theme_font_size_override("font_size", 22)
-	root.add_child(title)
-
-	_status_label = Label.new()
-	root.add_child(_status_label)
-
-	root.add_child(HSeparator.new())
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
-
-	_rows_box = VBoxContainer.new()
-	_rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_rows_box.add_theme_constant_override("separation", 6)
-	scroll.add_child(_rows_box)
-
+	_status_label = $Root/StatusLabel as Label
+	_scroll = $Root/Scroll as ScrollContainer
 	_render()
 
 
 func _render() -> void:
-	for child in _rows_box.get_children():
-		child.queue_free()
+	_update_status()
 
+	# 캔버스 새로 구성
+	for child in _scroll.get_children():
+		child.queue_free()
+	_canvas = MapCanvas.new()
+	_canvas.node_selected.connect(_on_node_selected)
+	_scroll.add_child(_canvas)
+
+	var available := GameManager.get_available_nodes()
+	var available_ids: Array[int] = []
+	for n in available:
+		available_ids.append(n.id)
+	var current_id: int = GameManager.current_node.id if GameManager.current_node != null else -1
+	_canvas.setup(GameManager.map, available_ids, current_id)
+	# 시작 시 아래(현재 위치)쪽이 보이도록 스크롤
+	_scroll.set_deferred("scroll_vertical", 100000)
+
+
+func _update_status() -> void:
 	var relic_names: Array[String] = []
 	for r in GameManager.relics:
 		relic_names.append(r.display_name)
@@ -55,30 +44,6 @@ func _render() -> void:
 		GameManager.current_hp, GameManager.max_hp, GameManager.gold,
 		GameManager.current_floor, relic_part
 	]
-
-	var available := GameManager.get_available_nodes()
-	var available_ids: Array[int] = []
-	for n in available:
-		available_ids.append(n.id)
-
-	for r in range(GameManager.map.size() - 1, -1, -1):
-		var row: Array = GameManager.map[r]
-		var hbox := HBoxContainer.new()
-		hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-		hbox.add_theme_constant_override("separation", 12)
-		_rows_box.add_child(hbox)
-
-		for node in row:
-			var btn := Button.new()
-			var is_available: bool = available_ids.has(node.id)
-			var is_current: bool = GameManager.current_node != null and GameManager.current_node.id == node.id
-			var mark := "  현재" if is_current else ""
-			btn.text = MapNode.type_label(node.type) + mark
-			btn.custom_minimum_size = Vector2(120, 40)
-			btn.disabled = not is_available
-			if is_available:
-				btn.pressed.connect(_on_node_selected.bind(node))
-			hbox.add_child(btn)
 
 
 func _on_node_selected(node: MapNode) -> void:
