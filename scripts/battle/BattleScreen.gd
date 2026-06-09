@@ -75,9 +75,9 @@ func _bind_ui() -> void:
 	_reroll_btn = $Root/Buttons/RerollButton as Button
 	_confirm_btn = $Root/Buttons/ConfirmButton as Button
 	_continue_btn = $Root/Buttons/ContinueButton as Button
-	# 굴리기는 주사위 클릭으로 대체 → 버튼 숨김
+	# 굴림/리롤은 주사위 클릭으로 처리 → 두 버튼 숨김
 	_roll_btn.visible = false
-	_reroll_btn.pressed.connect(_on_reroll_pressed)
+	_reroll_btn.visible = false
 	_confirm_btn.pressed.connect(_on_confirm_pressed)
 	_continue_btn.pressed.connect(_on_continue_pressed)
 
@@ -87,13 +87,6 @@ func _bind_ui() -> void:
 	root.add_child(_dice_box)
 	root.move_child(_dice_box, _hand_label.get_index() + 1)
 	_result_label.text = ""
-
-
-func _on_reroll_pressed() -> void:
-	if _ended:
-		return
-	if not _bm.reroll():
-		_append_log("[color=gray]리롤할 주사위가 없거나 토큰이 없습니다.[/color]")
 
 
 func _on_confirm_pressed() -> void:
@@ -143,14 +136,14 @@ func _append_log(text: String) -> void:
 func _render_hand() -> void:
 	for c in _dice_box.get_children():
 		c.queue_free()
-	_hand_label.text = "주사위를 클릭해 굴리세요 (에너지 %d/%d)" % [
-		_bm.energy if _bm else 0, BattleManager.MAX_ENERGY
+	_hand_label.text = "클릭: 굴림(에너지)  ·  굴린 주사위 클릭: 리롤(토큰)  ·  에너지 %d/%d  토큰 %d" % [
+		_bm.energy if _bm else 0, BattleManager.MAX_ENERGY, GameManager.reroll_tokens
 	]
 	for i in _hand.size():
 		_dice_box.add_child(_dice_chip(i))
 
 
-## 클릭 = 즉시 굴림(에너지 소모). 굴린 주사위는 면 결과 + 액센트 바.
+## 안 굴린 주사위 클릭 = 굴림(에너지). 굴린 주사위 클릭 = 그것만 리롤(토큰).
 func _dice_chip(index: int) -> Control:
 	var die: DiceData = _hand[index]
 	var box := _dice_base(die)
@@ -158,6 +151,11 @@ func _dice_chip(index: int) -> Control:
 	if _bm.is_rolled(index):
 		_overlay_face(box, _bm.face_for(index))
 		box.add_child(_accent_bar())
+		if not _ended and GameManager.reroll_tokens > 0:
+			box.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+			box.gui_input.connect(func(ev: InputEvent):
+				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+					_bm.reroll_index(index))
 	else:
 		box.add_child(_cost_badge(die.energy_cost))
 		if _bm.can_roll(index):
@@ -359,6 +357,4 @@ func _on_target_pressed(index: int) -> void:
 
 
 func _update_buttons() -> void:
-	var rolled := _bm != null and _bm.any_rolled()
-	_reroll_btn.disabled = _ended or not rolled or GameManager.reroll_tokens <= 0
 	_confirm_btn.disabled = _ended

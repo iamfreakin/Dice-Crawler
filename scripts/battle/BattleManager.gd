@@ -114,14 +114,13 @@ func face_for(index: int) -> FaceData:
 	return _rolled.get(index)
 
 
-## 토큰 1개로 이미 굴린 주사위 전부 재굴림.
-func reroll() -> bool:
-	if _rolled.is_empty():
+## 토큰 1개로 굴린 주사위 하나만 재굴림.
+func reroll_index(index: int) -> bool:
+	if not is_rolled(index):
 		return false
 	if not GameManager.spend_reroll_token():
 		return false
-	for i in _rolled.keys():
-		_rolled[i] = (_hand[i] as DiceData).roll()
+	_rolled[index] = (_hand[index] as DiceData).roll()
 	dice_rolled.emit(_results())
 	return true
 
