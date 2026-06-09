@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_relic")
 id = &"ember_core"
-display_name = "🔥 불씨 정수"
+display_name = "불씨 정수"
 description = "화상 부여량 +2"
 effect = 2
 value = 2

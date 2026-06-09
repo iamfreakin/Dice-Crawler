@@ -49,6 +49,9 @@ static func _btn_style(bg: Color, border: Color) -> StyleBoxFlat:
 static func _build() -> Theme:
 	var t := Theme.new()
 	t.default_font_size = 16
+	var font := load("res://assets/fonts/main.ttf") as Font
+	if font != null:
+		t.default_font = font
 
 	# Button
 	t.set_stylebox("normal", "Button", _btn_style(BTN, ACCENT.darkened(0.25)))

@@ -14,6 +14,7 @@ var _victory: bool = false
 
 var _enemy_box: HBoxContainer
 var _dice_box: HBoxContainer
+var _player_hp_box: HBoxContainer
 var _player_label: Label
 var _hand_label: Label
 var _result_label: Label
@@ -81,11 +82,25 @@ func _bind_ui() -> void:
 	_confirm_btn.pressed.connect(_on_confirm_pressed)
 	_continue_btn.pressed.connect(_on_continue_pressed)
 
+	var root := $Root as VBoxContainer
+
+	# 로그에 패널 배경 (배경 위 가독성)
+	var panel_box := UITheme.shared().get_stylebox("panel", "PanelContainer")
+	if panel_box != null:
+		_log.add_theme_stylebox_override("normal", panel_box)
+
+	# 플레이어 HP 바 (PlayerLabel 위에 삽입)
+	_player_hp_box = HBoxContainer.new()
+	root.add_child(_player_hp_box)
+	root.move_child(_player_hp_box, _player_label.get_index())
+
+	# 주사위 칩을 패널 안에 넣어 HandLabel 아래 배치
 	_dice_box = HBoxContainer.new()
 	_dice_box.add_theme_constant_override("separation", 12)
-	var root := $Root as VBoxContainer
-	root.add_child(_dice_box)
-	root.move_child(_dice_box, _hand_label.get_index() + 1)
+	var dice_panel := PanelContainer.new()
+	dice_panel.add_child(_dice_box)
+	root.add_child(dice_panel)
+	root.move_child(dice_panel, _hand_label.get_index() + 1)
 	_result_label.text = ""
 
 
@@ -136,7 +151,7 @@ func _append_log(text: String) -> void:
 func _render_hand() -> void:
 	for c in _dice_box.get_children():
 		c.queue_free()
-	_hand_label.text = "클릭: 굴림(에너지)  ·  굴린 주사위 클릭: 리롤(토큰)  ·  에너지 %d/%d  토큰 %d" % [
+	_hand_label.text = "주사위 클릭=굴림(에너지)  ·  굴린 주사위의 리롤 버튼=재굴림(토큰)  ·  에너지 %d/%d  토큰 %d" % [
 		_bm.energy if _bm else 0, BattleManager.MAX_ENERGY, GameManager.reroll_tokens
 	]
 	for i in _hand.size():
@@ -151,11 +166,9 @@ func _dice_chip(index: int) -> Control:
 	if _bm.is_rolled(index):
 		_overlay_face(box, _bm.face_for(index))
 		box.add_child(_accent_bar())
+		# 본체 클릭은 무반응 — 전용 리롤 버튼으로만 리롤(오클릭 방지)
 		if not _ended and GameManager.reroll_tokens > 0:
-			box.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-			box.gui_input.connect(func(ev: InputEvent):
-				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-					_bm.reroll_index(index))
+			box.add_child(_reroll_button(index))
 	else:
 		box.add_child(_cost_badge(die.energy_cost))
 		if _bm.can_roll(index):
@@ -176,6 +189,30 @@ func _dice_base(die: DiceData) -> Control:
 	if body != null:
 		box.add_child(_centered(body))
 	return box
+
+
+## 굴린 주사위 우상단의 전용 리롤 버튼 (토큰 1 소모).
+func _reroll_button(index: int) -> Control:
+	const SZ := 18.0
+	var holder := Control.new()
+	holder.size = Vector2(SZ, SZ)
+	holder.position = Vector2(DICE_BOX - SZ, 0)
+	var bg := ColorRect.new()
+	bg.color = Color(0.1, 0.1, 0.14, 0.85)
+	bg.size = Vector2(SZ, SZ)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(bg)
+	var rb := TextureButton.new()
+	rb.texture_normal = load("res://assets/sprites/faces/reroll.png")
+	rb.ignore_texture_size = true
+	rb.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	rb.size = Vector2(SZ, SZ)
+	rb.position = Vector2.ZERO
+	rb.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	rb.tooltip_text = "리롤 (토큰 1)"
+	rb.pressed.connect(func(): _bm.reroll_index(index))
+	holder.add_child(rb)
+	return holder
 
 
 func _accent_bar() -> ColorRect:
@@ -243,12 +280,41 @@ func _face_name(kind: DiceData.FaceKind) -> String:
 # --- 표시 갱신 ----------------------------------------------------------
 func _refresh() -> void:
 	_refresh_enemies()
-	_player_label.text = "플레이어 HP: %d/%d   방어: %d   에너지: %d/%d   리롤: %d   골드: %d" % [
-		GameManager.current_hp, GameManager.max_hp, _bm.player_block if _bm else 0,
-		_bm.energy if _bm else 0, BattleManager.MAX_ENERGY,
+	for c in _player_hp_box.get_children():
+		c.queue_free()
+	_player_hp_box.add_child(_hp_bar(GameManager.current_hp, GameManager.max_hp, 260.0, Color("4caf50")))
+	_player_label.text = "방어 %d   ·   에너지 %d/%d   ·   리롤 %d   ·   골드 %d" % [
+		_bm.player_block if _bm else 0, _bm.energy if _bm else 0, BattleManager.MAX_ENERGY,
 		GameManager.reroll_tokens, GameManager.gold
 	]
 	_update_buttons()
+
+
+## HP 바 위젯 (배경 + 채움 + 수치 텍스트).
+func _hp_bar(cur: int, mx: int, width: float, fill: Color) -> Control:
+	var root := Control.new()
+	root.custom_minimum_size = Vector2(width, 20)
+	root.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var bg := ColorRect.new()
+	bg.color = Color(0.08, 0.08, 0.1, 0.9)
+	bg.size = Vector2(width, 20)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(bg)
+	var frac := clampf(float(cur) / float(maxi(1, mx)), 0.0, 1.0)
+	var fr := ColorRect.new()
+	fr.color = fill
+	fr.size = Vector2(width * frac, 20)
+	fr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(fr)
+	var lbl := Label.new()
+	lbl.text = "%d/%d" % [cur, mx]
+	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.size = Vector2(width, 20)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(lbl)
+	return root
 
 
 func _refresh_enemies() -> void:
@@ -273,17 +339,18 @@ func _refresh_enemies() -> void:
 		if spr != null:
 			col.add_child(spr)
 
+		if not e.is_dead():
+			col.add_child(_hp_bar(e.current_hp, e.data.max_hp, 140.0, Color("c0392b")))
+
 		var btn := Button.new()
 		if e.is_dead():
 			btn.text = "%s 처치됨" % e.data.display_name
 			btn.disabled = true
 		else:
-			var prefix := "▶ " if e == target else ""
+			var prefix := "> " if e == target else ""
 			var status := e.status_text()
 			var status_part := ("  [%s]" % status) if status != "" else ""
-			btn.text = "%s%s  HP %d/%d  방어 %d%s" % [
-				prefix, e.data.display_name, e.current_hp, e.data.max_hp, e.block, status_part
-			]
+			btn.text = "%s%s  방어 %d%s" % [prefix, e.data.display_name, e.block, status_part]
 			btn.disabled = _ended
 			btn.pressed.connect(_on_target_pressed.bind(i))
 		col.add_child(btn)
