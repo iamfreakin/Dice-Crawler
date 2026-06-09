@@ -2,11 +2,16 @@
 
 > 이 문서는 **Claude Code와 Codex 공용 규칙**이다. 두 에이전트는 역할 구분 없이
 > 아래 컨벤션과 구조 규칙을 동일하게 따른다. (`AGENTS.md`는 이 문서를 가리킨다.)
-> 게임 기획 전체는 [docs/design.md](docs/design.md) 참조.
+> 게임 기획은 [docs/design.md](docs/design.md), 작업 우선순위는 [docs/roadmap.md](docs/roadmap.md) 참조.
 
 ## 프로젝트 한 줄 요약
 
-Godot 4.6 + GDScript로 만드는 **턴제 주사위 로그라이크** (Slay the Spire 구조 + 주사위 빌드업). PC / itch.io 우선 출시.
+Godot 4.6 + GDScript로 만드는 **턴제 주사위 로그라이크**. PC / itch.io 우선 출시.
+
+> **정체성**: 굴림 결과를 읽고 즉흥 전술을, 면 조각으로 장기 빌드를 짜는 주사위 로그라이크.
+> (단기 적응 ↔ 장기 빌드 두 축이 "주사위판 StS"와의 차별점.)
+
+**다음 작업(roadmap)**: ① 전투 정산을 순수 함수로 분리 → ② 예상 피해/상태 툴팁 → ③ 면 조각 시스템(정체성) → ④ 손맛 → ⑤ 1막 콘텐츠 → ⑥ 출시 기능.
 
 ## 기술 스택 & 핵심 아키텍처
 
