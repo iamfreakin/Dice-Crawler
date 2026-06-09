@@ -12,18 +12,18 @@ signal battle_ended(victory: bool)
 enum State { DRAW, PLAYER_TURN, RESOLVE, ENEMY_TURN, REWARD }
 
 const DRAW_COUNT: int = 5   # 핸드로 뽑는 장수
-const SELECT_COUNT: int = 3 # 그중 굴릴 장수
+const MAX_ENERGY: int = 3   # 매 턴 에너지
 
 var _state: State = State.DRAW
 var _enemies: Array[EnemyInstance] = []
 var target_index: int = 0
 var player_block: int = 0
+var energy: int = 0
 
 var _draw_pile: Array[DiceData] = []
 var _discard_pile: Array[DiceData] = []
 var _hand: Array[DiceData] = []
-var _last_selection: Array[DiceData] = []
-var _roll_results: Array[Dictionary] = []
+var _rolled: Dictionary = {}  # 핸드 인덱스 -> FaceData (굴린 주사위)
 
 
 func start_battle(enemy_defs: Array[EnemyData]) -> void:
@@ -54,9 +54,9 @@ func _change_state(new_state: State) -> void:
 
 func _do_draw() -> void:
 	player_block = GameManager.relic_value(RelicData.Effect.BLOCK_PER_TURN)
+	energy = MAX_ENERGY
 	_hand.clear()
-	_roll_results.clear()
-	_last_selection.clear()
+	_rolled.clear()
 	for i in DRAW_COUNT:
 		var d := _draw_one()
 		if d != null:
@@ -79,27 +79,56 @@ func _reshuffle() -> void:
 	_draw_pile.shuffle()
 
 
-## 선택한 주사위만 굴린다. (핸드 N개 중 고른 것들)
-func roll_selected(selection: Array[DiceData]) -> void:
-	_last_selection = selection.duplicate()
-	_roll_results.clear()
-	for d in selection:
-		_roll_results.append({"die": d, "face": d.roll()})
-	dice_rolled.emit(_roll_results)
-
-
-func reroll() -> bool:
-	if _last_selection.is_empty():
+## 핸드 index의 주사위를 굴린다. 에너지가 충분하고 아직 안 굴렸으면 성공.
+func roll_index(index: int) -> bool:
+	if not can_roll(index):
 		return false
-	if not GameManager.spend_reroll_token():
-		return false
-	roll_selected(_last_selection)
+	var die: DiceData = _hand[index]
+	energy -= die.energy_cost
+	_rolled[index] = die.roll()
+	dice_rolled.emit(_results())
 	return true
 
 
+func can_roll(index: int) -> bool:
+	if index < 0 or index >= _hand.size() or _rolled.has(index):
+		return false
+	return energy >= (_hand[index] as DiceData).energy_cost
+
+
+func is_rolled(index: int) -> bool:
+	return _rolled.has(index)
+
+
+func any_rolled() -> bool:
+	return not _rolled.is_empty()
+
+
+func face_for(index: int) -> FaceData:
+	return _rolled.get(index)
+
+
+## 토큰 1개로 이미 굴린 주사위 전부 재굴림.
+func reroll() -> bool:
+	if _rolled.is_empty():
+		return false
+	if not GameManager.spend_reroll_token():
+		return false
+	for i in _rolled.keys():
+		_rolled[i] = (_hand[i] as DiceData).roll()
+	dice_rolled.emit(_results())
+	return true
+
+
+## 굴린 주사위 결과 목록 {die, face}.
+func _results() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for i in _rolled.keys():
+		out.append({"die": _hand[i], "face": _rolled[i]})
+	return out
+
+
 func confirm_turn() -> void:
-	if _roll_results.is_empty():
-		return
 	_change_state(State.RESOLVE)
 
 
@@ -109,7 +138,7 @@ func _do_resolve() -> void:
 	var burn_to_apply: int = 0
 	var element_counts: Dictionary = {}
 
-	for r in _roll_results:
+	for r in _results():
 		var die: DiceData = r["die"]
 		var face: FaceData = r["face"]
 		match face.kind:

@@ -1,14 +1,14 @@
 extends Control
 ## BattleManager를 구동하고 전투 UI 입력/표시를 처리한다.
 ## 플레이어 스프라이트/배경/배치는 씬(Battle.tscn)에서, 동적 요소(적/주사위)는 코드로.
+## 주사위는 에너지를 써서 클릭으로 굴린다(슬더스식). 효과는 확정 때 정산.
 
 const ENEMY_SCALE := 3.0
-const ENEMY_MAX_H := 170.0  # 보스 등 큰 적이 화면(버튼)을 밀어내지 않도록 상한
+const ENEMY_MAX_H := 170.0
 const INTENT_ICON := 32.0
 const DICE_BOX := 64.0
 
 var _bm: BattleManager
-var _has_rolled: bool = false
 var _ended: bool = false
 var _victory: bool = false
 
@@ -23,8 +23,7 @@ var _reroll_btn: Button
 var _confirm_btn: Button
 var _continue_btn: Button
 
-var _hand: Array = []          # 이번 턴 뽑은 주사위 (DiceData)
-var _selected: Array[int] = [] # 선택한 핸드 인덱스
+var _hand: Array = []  # 이번 턴 뽑은 주사위 (DiceData)
 
 
 func _ready() -> void:
@@ -76,13 +75,12 @@ func _bind_ui() -> void:
 	_reroll_btn = $Root/Buttons/RerollButton as Button
 	_confirm_btn = $Root/Buttons/ConfirmButton as Button
 	_continue_btn = $Root/Buttons/ContinueButton as Button
-	_roll_btn.pressed.connect(_on_roll_pressed)
+	# 굴리기는 주사위 클릭으로 대체 → 버튼 숨김
+	_roll_btn.visible = false
 	_reroll_btn.pressed.connect(_on_reroll_pressed)
 	_confirm_btn.pressed.connect(_on_confirm_pressed)
 	_continue_btn.pressed.connect(_on_continue_pressed)
 
-	# 주사위 칩을 보여줄 가로 박스를 핸드 라벨 아래에 삽입
-	_hand_label.text = "내 주사위"
 	_dice_box = HBoxContainer.new()
 	_dice_box.add_theme_constant_override("separation", 12)
 	var root := $Root as VBoxContainer
@@ -91,41 +89,27 @@ func _bind_ui() -> void:
 	_result_label.text = ""
 
 
-func _on_roll_pressed() -> void:
-	if _ended or _has_rolled:
-		return
-	if _selected.size() != BattleManager.SELECT_COUNT:
-		return
-	var selection: Array[DiceData] = []
-	for i in _selected:
-		selection.append(_hand[i])
-	_bm.roll_selected(selection)
-
-
 func _on_reroll_pressed() -> void:
-	if _ended or not _has_rolled:
+	if _ended:
 		return
 	if not _bm.reroll():
-		_append_log("[color=gray]리롤 토큰이 없습니다.[/color]")
+		_append_log("[color=gray]리롤할 주사위가 없거나 토큰이 없습니다.[/color]")
 
 
 func _on_confirm_pressed() -> void:
-	if _ended or not _has_rolled:
+	if _ended:
 		return
 	_bm.confirm_turn()
 
 
 func _on_hand_drawn(hand: Array) -> void:
-	_has_rolled = false
 	_hand = hand.duplicate()
-	_selected.clear()
 	_render_hand()
 	_refresh()
 
 
-func _on_dice_rolled(results: Array) -> void:
-	_has_rolled = true
-	_render_results(results)
+func _on_dice_rolled(_results: Array) -> void:
+	_render_hand()
 	_refresh()
 
 
@@ -133,7 +117,6 @@ func _on_battle_ended(victory: bool) -> void:
 	_ended = true
 	_victory = victory
 	_result_label.text = "승리!" if victory else "패배..."
-	_roll_btn.visible = false
 	_reroll_btn.visible = false
 	_confirm_btn.visible = false
 	_continue_btn.visible = true
@@ -155,13 +138,12 @@ func _append_log(text: String) -> void:
 	_log.append_text(text + "\n")
 
 
-# --- 주사위 칩 ----------------------------------------------------------
-## 핸드(선택 단계): 뽑은 주사위를 클릭해 굴릴 주사위를 고른다.
+# --- 주사위 (에너지 클릭 굴림) ------------------------------------------
 func _render_hand() -> void:
 	for c in _dice_box.get_children():
 		c.queue_free()
-	_hand_label.text = "주사위 %d개 중 %d개 선택 (선택 %d)" % [
-		_hand.size(), BattleManager.SELECT_COUNT, _selected.size()
+	_hand_label.text = "주사위를 클릭해 에너지로 굴리세요 (에너지 %d/%d)" % [
+		_bm.energy if _bm else 0, BattleManager.MAX_ENERGY
 	]
 	for i in _hand.size():
 		_dice_box.add_child(_hand_chip(i))
@@ -177,73 +159,61 @@ func _hand_chip(index: int) -> Control:
 	if body != null:
 		box.add_child(_centered(body))
 
-	var is_sel: bool = _selected.has(index)
-	if is_sel:
-		# 선택 강조: 하단 액센트 바
+	if _bm.is_rolled(index):
+		_overlay_face(box, _bm.face_for(index))
+		# 굴린 주사위 표시: 하단 액센트 바
 		var bar := ColorRect.new()
 		bar.color = Color("efc127")
 		bar.size = Vector2(DICE_BOX, 5)
 		bar.position = Vector2(0, DICE_BOX - 5)
 		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		box.add_child(bar)
-	elif _has_rolled:
-		box.modulate = Color(0.4, 0.4, 0.45)
 	else:
-		box.modulate = Color(0.75, 0.75, 0.8)
-
-	if not _has_rolled:
-		box.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		box.gui_input.connect(func(ev: InputEvent):
-			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-				_toggle_select(index))
-	return box
-
-
-func _toggle_select(index: int) -> void:
-	if _has_rolled:
-		return
-	if _selected.has(index):
-		_selected.erase(index)
-	elif _selected.size() < BattleManager.SELECT_COUNT:
-		_selected.append(index)
-	_render_hand()
-	_update_buttons()
-
-
-## 굴림 결과: 선택해서 굴린 주사위에 면 결과를 겹쳐 표시.
-func _render_results(results: Array) -> void:
-	for c in _dice_box.get_children():
-		c.queue_free()
-	_hand_label.text = "굴림 결과"
-	for r in results:
-		_dice_box.add_child(_dice_chip(r["die"], r["face"]))
-
-
-func _dice_chip(die: DiceData, face) -> Control:
-	var box := Control.new()
-	box.custom_minimum_size = Vector2(DICE_BOX, DICE_BOX)
-	box.size = Vector2(DICE_BOX, DICE_BOX)
-
-	var body := load("res://assets/sprites/dice/%s.png" % die.id) as Texture2D
-	if body != null:
-		box.add_child(_centered(body))
-
-	if face != null:
-		if face.kind == DiceData.FaceKind.NUMBER:
-			var lbl := Label.new()
-			lbl.text = str(face.value)
-			lbl.add_theme_font_size_override("font_size", 30)
-			lbl.size = Vector2(DICE_BOX, DICE_BOX)
-			lbl.position = Vector2.ZERO
-			lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			box.add_child(lbl)
+		# 비용 배지 (좌상단)
+		box.add_child(_cost_badge(die.energy_cost))
+		if _bm.can_roll(index):
+			box.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+			box.gui_input.connect(func(ev: InputEvent):
+				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+					_bm.roll_index(index))
 		else:
-			var ftex := load("res://assets/sprites/faces/%s.png" % _face_name(face.kind)) as Texture2D
-			if ftex != null:
-				box.add_child(_centered(ftex))
+			box.modulate = Color(0.45, 0.45, 0.5)  # 에너지 부족
 	return box
+
+
+func _overlay_face(box: Control, face: FaceData) -> void:
+	if face == null:
+		return
+	if face.kind == DiceData.FaceKind.NUMBER:
+		var lbl := Label.new()
+		lbl.text = str(face.value)
+		lbl.add_theme_font_size_override("font_size", 30)
+		lbl.size = Vector2(DICE_BOX, DICE_BOX)
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(lbl)
+	else:
+		var ftex := load("res://assets/sprites/faces/%s.png" % _face_name(face.kind)) as Texture2D
+		if ftex != null:
+			box.add_child(_centered(ftex))
+
+
+func _cost_badge(cost: int) -> Control:
+	var bg := ColorRect.new()
+	bg.color = Color(0.1, 0.1, 0.14, 0.85)
+	bg.size = Vector2(18, 18)
+	bg.position = Vector2.ZERO
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var lbl := Label.new()
+	lbl.text = str(cost)
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.size = Vector2(18, 18)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg.add_child(lbl)
+	return bg
 
 
 func _centered(tex: Texture2D) -> TextureRect:
@@ -267,9 +237,10 @@ func _face_name(kind: DiceData.FaceKind) -> String:
 # --- 표시 갱신 ----------------------------------------------------------
 func _refresh() -> void:
 	_refresh_enemies()
-	_player_label.text = "플레이어 HP: %d/%d   방어: %d   리롤: %d   골드: %d" % [
-		GameManager.current_hp, GameManager.max_hp,
-		_bm.player_block if _bm else 0, GameManager.reroll_tokens, GameManager.gold
+	_player_label.text = "플레이어 HP: %d/%d   방어: %d   에너지: %d/%d   리롤: %d   골드: %d" % [
+		GameManager.current_hp, GameManager.max_hp, _bm.player_block if _bm else 0,
+		_bm.energy if _bm else 0, BattleManager.MAX_ENERGY,
+		GameManager.reroll_tokens, GameManager.gold
 	]
 	_update_buttons()
 
@@ -318,7 +289,6 @@ func _make_enemy_sprite(e: EnemyInstance) -> TextureRect:
 		return null
 	var tr := TextureRect.new()
 	tr.texture = tex
-	# 3배 확대하되 최대 높이를 넘지 않게 (보스가 화면을 넘겨 버튼이 가려지는 문제 방지)
 	var scale := minf(ENEMY_SCALE, ENEMY_MAX_H / tex.get_size().y)
 	tr.custom_minimum_size = tex.get_size() * scale
 	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -381,7 +351,6 @@ func _on_target_pressed(index: int) -> void:
 
 
 func _update_buttons() -> void:
-	var can_roll := not _ended and not _has_rolled and _selected.size() == BattleManager.SELECT_COUNT
-	_roll_btn.disabled = not can_roll
-	_reroll_btn.disabled = _ended or not _has_rolled or GameManager.reroll_tokens <= 0
-	_confirm_btn.disabled = _ended or not _has_rolled
+	var rolled := _bm != null and _bm.any_rolled()
+	_reroll_btn.disabled = _ended or not rolled or GameManager.reroll_tokens <= 0
+	_confirm_btn.disabled = _ended

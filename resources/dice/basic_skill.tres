@@ -44,4 +44,5 @@ script = ExtResource("2_dice")
 id = &"basic_skill"
 display_name = "스킬"
 dice_type = 2
+energy_cost = 2
 faces = [SubResource("Face_skl_fire"), SubResource("Face_skl_ice"), SubResource("Face_skl_light"), SubResource("Face_skl_curse"), SubResource("Face_skl_reroll"), SubResource("Face_skl_num")]

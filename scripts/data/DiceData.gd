@@ -19,6 +19,7 @@ enum FaceKind {
 @export var id: StringName              ## 고유 식별자 (예: &"basic_attack")
 @export var display_name: String = ""   ## UI 표시 이름
 @export var dice_type: DiceType = DiceType.ATTACK
+@export var energy_cost: int = 1        ## 굴리는 데 드는 에너지
 @export var icon: Texture2D
 
 ## 면 목록. 6면이 기본, 확장 보상으로 8면까지 늘어날 수 있다.
