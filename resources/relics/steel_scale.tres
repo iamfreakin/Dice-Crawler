@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_relic")
 id = &"steel_scale"
-display_name = "🛡️ 강철 비늘"
+display_name = "강철 비늘"
 description = "내 턴 시작 시 방어 +3"
 effect = 1
 value = 3
