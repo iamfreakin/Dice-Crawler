@@ -23,6 +23,9 @@ var _reroll_btn: Button
 var _confirm_btn: Button
 var _continue_btn: Button
 
+var _hand: Array = []          # 이번 턴 뽑은 주사위 (DiceData)
+var _selected: Array[int] = [] # 선택한 핸드 인덱스
+
 
 func _ready() -> void:
 	theme = UITheme.shared()
@@ -91,7 +94,12 @@ func _bind_ui() -> void:
 func _on_roll_pressed() -> void:
 	if _ended or _has_rolled:
 		return
-	_bm.roll_hand()
+	if _selected.size() != BattleManager.SELECT_COUNT:
+		return
+	var selection: Array[DiceData] = []
+	for i in _selected:
+		selection.append(_hand[i])
+	_bm.roll_selected(selection)
 
 
 func _on_reroll_pressed() -> void:
@@ -109,16 +117,15 @@ func _on_confirm_pressed() -> void:
 
 func _on_hand_drawn(hand: Array) -> void:
 	_has_rolled = false
-	var items: Array = []
-	for d in hand:
-		items.append({"die": d, "face": null})
-	_render_dice(items)
+	_hand = hand.duplicate()
+	_selected.clear()
+	_render_hand()
 	_refresh()
 
 
 func _on_dice_rolled(results: Array) -> void:
 	_has_rolled = true
-	_render_dice(results)
+	_render_results(results)
 	_refresh()
 
 
@@ -149,12 +156,67 @@ func _append_log(text: String) -> void:
 
 
 # --- 주사위 칩 ----------------------------------------------------------
-## items: [{die: DiceData, face: FaceData|null}, ...]
-func _render_dice(items: Array) -> void:
+## 핸드(선택 단계): 뽑은 주사위를 클릭해 굴릴 주사위를 고른다.
+func _render_hand() -> void:
 	for c in _dice_box.get_children():
 		c.queue_free()
-	for it in items:
-		_dice_box.add_child(_dice_chip(it["die"], it.get("face")))
+	_hand_label.text = "주사위 %d개 중 %d개 선택 (선택 %d)" % [
+		_hand.size(), BattleManager.SELECT_COUNT, _selected.size()
+	]
+	for i in _hand.size():
+		_dice_box.add_child(_hand_chip(i))
+
+
+func _hand_chip(index: int) -> Control:
+	var die: DiceData = _hand[index]
+	var box := Control.new()
+	box.custom_minimum_size = Vector2(DICE_BOX, DICE_BOX)
+	box.size = Vector2(DICE_BOX, DICE_BOX)
+
+	var body := load("res://assets/sprites/dice/%s.png" % die.id) as Texture2D
+	if body != null:
+		box.add_child(_centered(body))
+
+	var is_sel: bool = _selected.has(index)
+	if is_sel:
+		# 선택 강조: 하단 액센트 바
+		var bar := ColorRect.new()
+		bar.color = Color("efc127")
+		bar.size = Vector2(DICE_BOX, 5)
+		bar.position = Vector2(0, DICE_BOX - 5)
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(bar)
+	elif _has_rolled:
+		box.modulate = Color(0.4, 0.4, 0.45)
+	else:
+		box.modulate = Color(0.75, 0.75, 0.8)
+
+	if not _has_rolled:
+		box.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		box.gui_input.connect(func(ev: InputEvent):
+			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+				_toggle_select(index))
+	return box
+
+
+func _toggle_select(index: int) -> void:
+	if _has_rolled:
+		return
+	if _selected.has(index):
+		_selected.erase(index)
+	elif _selected.size() < BattleManager.SELECT_COUNT:
+		_selected.append(index)
+	_render_hand()
+	_update_buttons()
+
+
+## 굴림 결과: 선택해서 굴린 주사위에 면 결과를 겹쳐 표시.
+func _render_results(results: Array) -> void:
+	for c in _dice_box.get_children():
+		c.queue_free()
+	_hand_label.text = "굴림 결과"
+	for r in results:
+		_dice_box.add_child(_dice_chip(r["die"], r["face"]))
 
 
 func _dice_chip(die: DiceData, face) -> Control:
@@ -319,6 +381,7 @@ func _on_target_pressed(index: int) -> void:
 
 
 func _update_buttons() -> void:
-	_roll_btn.disabled = _ended or _has_rolled
+	var can_roll := not _ended and not _has_rolled and _selected.size() == BattleManager.SELECT_COUNT
+	_roll_btn.disabled = not can_roll
 	_reroll_btn.disabled = _ended or not _has_rolled or GameManager.reroll_tokens <= 0
 	_confirm_btn.disabled = _ended or not _has_rolled

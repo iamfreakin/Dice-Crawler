@@ -11,7 +11,8 @@ signal battle_ended(victory: bool)
 
 enum State { DRAW, PLAYER_TURN, RESOLVE, ENEMY_TURN, REWARD }
 
-const HAND_SIZE: int = 3
+const DRAW_COUNT: int = 5   # 핸드로 뽑는 장수
+const SELECT_COUNT: int = 3 # 그중 굴릴 장수
 
 var _state: State = State.DRAW
 var _enemies: Array[EnemyInstance] = []
@@ -21,6 +22,7 @@ var player_block: int = 0
 var _draw_pile: Array[DiceData] = []
 var _discard_pile: Array[DiceData] = []
 var _hand: Array[DiceData] = []
+var _last_selection: Array[DiceData] = []
 var _roll_results: Array[Dictionary] = []
 
 
@@ -54,7 +56,8 @@ func _do_draw() -> void:
 	player_block = GameManager.relic_value(RelicData.Effect.BLOCK_PER_TURN)
 	_hand.clear()
 	_roll_results.clear()
-	for i in HAND_SIZE:
+	_last_selection.clear()
+	for i in DRAW_COUNT:
 		var d := _draw_one()
 		if d != null:
 			_hand.append(d)
@@ -76,17 +79,21 @@ func _reshuffle() -> void:
 	_draw_pile.shuffle()
 
 
-func roll_hand() -> void:
+## 선택한 주사위만 굴린다. (핸드 N개 중 고른 것들)
+func roll_selected(selection: Array[DiceData]) -> void:
+	_last_selection = selection.duplicate()
 	_roll_results.clear()
-	for d in _hand:
+	for d in selection:
 		_roll_results.append({"die": d, "face": d.roll()})
 	dice_rolled.emit(_roll_results)
 
 
 func reroll() -> bool:
+	if _last_selection.is_empty():
+		return false
 	if not GameManager.spend_reroll_token():
 		return false
-	roll_hand()
+	roll_selected(_last_selection)
 	return true
 
 
