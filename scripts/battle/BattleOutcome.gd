@@ -4,6 +4,7 @@ extends RefCounted
 ## 확정 = 이 값을 한 번 commit. 미리보기 = 같은 계산을 commit만 안 함.
 
 var damage: int = 0            ## 타겟에게 줄 데미지 (취약 미반영 원값)
+var dealt: int = 0             ## 취약 반영한 실제 피해 (표시/미리보기용, 적 방어 미반영)
 var block: int = 0             ## 플레이어 방어
 var burn: int = 0             ## 타겟에게 부여할 화상 (유물 보정 포함)
 var apply_weak: int = 0        ## 타겟 약화 지속 턴 (0=없음)

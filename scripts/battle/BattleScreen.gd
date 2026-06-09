@@ -287,7 +287,28 @@ func _refresh() -> void:
 		_bm.player_block if _bm else 0, _bm.energy if _bm else 0, BattleManager.MAX_ENERGY,
 		GameManager.reroll_tokens, GameManager.gold
 	]
+	if not _ended and _bm != null:
+		_update_preview()
 	_update_buttons()
+
+
+## 확정 시 예상 결과 미리보기 (preview() 사용).
+func _update_preview() -> void:
+	var o := _bm.preview()
+	var parts: Array[String] = []
+	if o.dealt > 0:
+		parts.append("피해 %d" % o.dealt)
+	if o.block > 0:
+		parts.append("방어 %d" % o.block)
+	if o.burn > 0:
+		parts.append("화상 +%d" % o.burn)
+	if o.apply_weak > 0:
+		parts.append("약화")
+	if o.apply_vulnerable > 0:
+		parts.append("취약")
+	if o.token_gain > 0:
+		parts.append("토큰 +%d" % o.token_gain)
+	_result_label.text = "확정 시 →  " + (" · ".join(parts) if not parts.is_empty() else "-")
 
 
 ## HP 바 위젯 (배경 + 채움 + 수치 텍스트).
@@ -325,6 +346,11 @@ func _refresh_enemies() -> void:
 
 	var enemies := _bm.get_enemies()
 	var target := _bm.current_target()
+	# 적 공격이 내 방어(이번 턴 굴린 방어 포함)를 깎고 남는 실제 HP 피해를 미리 계산
+	var block_pool: int = (_bm.player_block if _bm else 0)
+	if not _ended:
+		block_pool += _bm.preview().block
+
 	for i in enemies.size():
 		var e: EnemyInstance = enemies[i]
 		var col := VBoxContainer.new()
@@ -333,7 +359,12 @@ func _refresh_enemies() -> void:
 		_enemy_box.add_child(col)
 
 		if not e.is_dead():
-			col.add_child(_make_intent_row(e.current_intent()))
+			var net := -1
+			var raw := _intent_attack_damage(e)
+			if raw >= 0:
+				net = maxi(0, raw - block_pool)
+				block_pool = maxi(0, block_pool - raw)
+			col.add_child(_make_intent_row(e.current_intent(), net))
 
 		var spr := _make_enemy_sprite(e)
 		if spr != null:
@@ -351,9 +382,33 @@ func _refresh_enemies() -> void:
 			var status := e.status_text()
 			var status_part := ("  [%s]" % status) if status != "" else ""
 			btn.text = "%s%s  방어 %d%s" % [prefix, e.data.display_name, e.block, status_part]
+			if status != "":
+				btn.tooltip_text = _status_tooltip(e)
 			btn.disabled = _ended
 			btn.pressed.connect(_on_target_pressed.bind(i))
 		col.add_child(btn)
+
+
+## 적의 현재 의도가 공격이면 플레이어가 받을(약화 반영) 피해, 아니면 -1.
+func _intent_attack_damage(e: EnemyInstance) -> int:
+	var intent := e.current_intent()
+	if intent == null:
+		return -1
+	match intent.kind:
+		IntentData.IntentKind.CHARGE, IntentData.IntentKind.SNIPE, IntentData.IntentKind.EXPLODE:
+			return e.weakened(intent.value)
+	return -1
+
+
+func _status_tooltip(e: EnemyInstance) -> String:
+	var lines: Array[String] = []
+	if e.burn > 0:
+		lines.append("화상 %d: 매 턴 시작 시 %d 피해 후 1 감소" % [e.burn, e.burn])
+	if e.weak > 0:
+		lines.append("약화 %d: 공격력 ×0.75 (%d턴)" % [e.weak, e.weak])
+	if e.vulnerable > 0:
+		lines.append("취약 %d: 받는 피해 ×1.5 (%d턴)" % [e.vulnerable, e.vulnerable])
+	return "\n".join(lines)
 
 
 func _make_enemy_sprite(e: EnemyInstance) -> TextureRect:
@@ -371,7 +426,7 @@ func _make_enemy_sprite(e: EnemyInstance) -> TextureRect:
 	return tr
 
 
-func _make_intent_row(intent: IntentData) -> HBoxContainer:
+func _make_intent_row(intent: IntentData, net_hp: int = -1) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 4)
@@ -379,7 +434,10 @@ func _make_intent_row(intent: IntentData) -> HBoxContainer:
 	if icon != null:
 		row.add_child(icon)
 	var lbl := Label.new()
-	lbl.text = _intent_value_text(intent)
+	var txt := _intent_value_text(intent)
+	if net_hp >= 0:
+		txt += "  (-%dHP)" % net_hp  # 막고 나면 실제로 받을 HP 피해
+	lbl.text = txt
 	row.add_child(lbl)
 	return row
 

@@ -198,6 +198,10 @@ func _compute_outcome(target: EnemyInstance) -> BattleOutcome:
 	if o.burn > 0:
 		o.burn += GameManager.relic_value(RelicData.Effect.BURN_BOOST)
 
+	# 취약 반영 실제 피해 (이미 취약이거나 이번 턴 취약 부여 시 증폭) — 표시/미리보기용
+	var will_vuln: bool = (target != null and target.vulnerable > 0) or o.apply_vulnerable > 0
+	o.dealt = int(round(o.damage * EnemyInstance.VULNERABLE_MULT)) if will_vuln else o.damage
+
 	return o
 
 
