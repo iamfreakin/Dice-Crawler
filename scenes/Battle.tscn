@@ -55,7 +55,7 @@ theme_override_constants/separation = 24
 alignment = 1
 
 [node name="PlayerSprite" type="TextureRect" parent="Root/Arena"]
-custom_minimum_size = Vector2(144, 144)
+custom_minimum_size = Vector2(192, 192)
 layout_mode = 2
 texture = ExtResource("3_player")
 expand_mode = 3
