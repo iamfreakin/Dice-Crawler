@@ -17,6 +17,7 @@ enum EffectType {
 	BLOCK,
 	APPLY_BURN,
 	GAIN_REROLL,
+	AMPLIFY_PREVIOUS,
 }
 
 @export var effect_type: EffectType = EffectType.DAMAGE
@@ -27,5 +28,5 @@ enum EffectType {
 @export_multiline var log_text: String = ""
 
 
-func amount(face: FaceData) -> int:
-	return face.value if use_face_value else value
+func amount(resolved_value: int) -> int:
+	return resolved_value if use_face_value else value

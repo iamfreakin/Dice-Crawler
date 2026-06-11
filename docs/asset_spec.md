@@ -89,6 +89,7 @@
 - `lightning.png` — 번개, 노랑(#efc127)
 - `curse.png` — 해골, 암보라(#7a3aa0)
 - `reroll.png` — 이중 회전화살표, 보라(#7f77dd)
+- `amplify.png` — 위쪽 화살표/증폭 파동 + `+2`, 노랑(#efc127)
 
 ---
 

@@ -164,7 +164,7 @@ func _dice_chip(index: int) -> Control:
 	var box := _dice_base(die)
 
 	if _bm.is_rolled(index):
-		_overlay_face(box, _bm.face_for(index))
+		_overlay_face(box, _bm.resolved_for(index))
 		box.add_child(_accent_bar())
 		# 본체 클릭은 무반응 — 전용 리롤 버튼으로만 리롤(오클릭 방지)
 		if not _ended and GameManager.reroll_tokens > 0:
@@ -224,22 +224,40 @@ func _accent_bar() -> ColorRect:
 	return bar
 
 
-func _overlay_face(box: Control, face: FaceData) -> void:
-	if face == null:
+func _overlay_face(box: Control, resolved: ResolvedRoll) -> void:
+	if resolved == null or resolved.face == null:
 		return
+	var face := resolved.face
 	if face.kind == DiceData.FaceKind.NUMBER:
-		var lbl := Label.new()
-		lbl.text = str(face.value)
-		lbl.add_theme_font_size_override("font_size", 30)
-		lbl.size = Vector2(DICE_BOX, DICE_BOX)
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(lbl)
+		box.add_child(_face_label(str(resolved.value), 30))
 	else:
-		var ftex := load("res://assets/sprites/faces/%s.png" % _face_name(face.kind)) as Texture2D
+		var path := "res://assets/sprites/faces/%s.png" % _face_name(face.kind)
+		var ftex := load(path) as Texture2D if ResourceLoader.exists(path) else null
 		if ftex != null:
 			box.add_child(_centered(ftex))
+		else:
+			box.add_child(_face_label(face.label, 20))
+	if face.kind == DiceData.FaceKind.AMPLIFY:
+		box.tooltip_text = "증폭: 직전 굴림 결과 +2"
+	if resolved.value != face.value:
+		var delta := resolved.value - face.value
+		var badge := _face_label("%+d" % delta, 13)
+		badge.position = Vector2(2, DICE_BOX - 21)
+		badge.size = Vector2(28, 18)
+		badge.add_theme_color_override("font_color", Color("efc127"))
+		box.add_child(badge)
+		box.tooltip_text = "증폭: %d → %d" % [face.value, resolved.value]
+
+
+func _face_label(text: String, font_size: int) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", font_size)
+	lbl.size = Vector2(DICE_BOX, DICE_BOX)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return lbl
 
 
 func _cost_badge(cost: int) -> Control:
@@ -274,6 +292,7 @@ func _face_name(kind: DiceData.FaceKind) -> String:
 		DiceData.FaceKind.LIGHTNING: return "lightning"
 		DiceData.FaceKind.CURSE: return "curse"
 		DiceData.FaceKind.REROLL: return "reroll"
+		DiceData.FaceKind.AMPLIFY: return "amplify"
 	return ""
 
 

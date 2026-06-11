@@ -15,6 +15,7 @@ enum FaceKind {
 	LIGHTNING,# ⚡
 	CURSE,    # 💀 저주 (굴리면 리롤 토큰 보너스)
 	REROLL,   # 🔄
+	AMPLIFY,  # 직전 굴림 결과 값 강화
 }
 
 @export var id: StringName              ## 고유 식별자 (예: &"basic_attack")

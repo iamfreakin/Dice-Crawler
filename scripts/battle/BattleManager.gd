@@ -113,8 +113,15 @@ func any_rolled() -> bool:
 
 
 func face_for(index: int) -> FaceData:
-	var e := _context.get_entry(index)
-	return e.base_face if e != null else null
+	var resolved := resolved_for(index)
+	return resolved.face if resolved != null else null
+
+
+func resolved_for(index: int) -> ResolvedRoll:
+	for resolved in preview_rolls():
+		if resolved.hand_index == index:
+			return resolved
+	return null
 
 
 ## 토큰 1개로 굴린 주사위 하나만 재굴림 (해당 항목의 rng_token 재발급 → 재선택).
@@ -132,8 +139,13 @@ func reroll_index(index: int) -> bool:
 ## 굴린 주사위 결과 목록 {die, face} (UI/시그널용).
 func _results() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	for e in _context.entries:
-		out.append({"die": e.die, "face": e.base_face})
+	for resolved in preview_rolls():
+		out.append({
+			"die": resolved.die,
+			"face": resolved.face,
+			"value": resolved.value,
+			"entry_id": resolved.entry_id,
+		})
 	return out
 
 
@@ -160,15 +172,14 @@ func _do_resolve() -> void:
 func _compute_outcome(target: EnemyInstance) -> BattleOutcome:
 	var o := BattleOutcome.new()
 	var counts: Dictionary = {}
-	for e in _context.entries:
-		var face: FaceData = e.base_face
-		EffectResolver.resolve_face(e.die, face, FaceEffectData.Timing.ON_CONFIRM, o)
+	for resolved in preview_rolls():
+		EffectResolver.resolve_confirm(resolved, o)
 		for tag in [
 			DiceData.FaceKind.FIRE,
 			DiceData.FaceKind.ICE,
 			DiceData.FaceKind.LIGHTNING,
 		]:
-			if face.has_tag(tag):
+			if resolved.has_tag(tag):
 				counts[tag] = counts.get(tag, 0) + 1
 
 	# 시너지 (같은 속성 2개 이상)
@@ -193,6 +204,18 @@ func _compute_outcome(target: EnemyInstance) -> BattleOutcome:
 		o.dealt = mini(target.current_hp, maxi(0, effective_damage - target.block))
 
 	return o
+
+
+## RollEntry 원본 이벤트를 순서대로 replay해 파생 결과를 만든다.
+## 호출할 때마다 새 객체를 만들며 RollEntry/FaceData를 수정하지 않는다.
+func preview_rolls() -> Array[ResolvedRoll]:
+	var rolls: Array[ResolvedRoll] = []
+	for entry in _context.entries:
+		var face := entry.select_face()
+		var resolved := ResolvedRoll.new(entry.entry_id, entry.index, entry.die, face)
+		rolls.append(resolved)
+		EffectResolver.resolve_after_roll(rolls)
+	return rolls
 
 
 ## 미리보기: 적용하지 않고 현재 타겟 기준 정산값만 반환 (Phase 2 예상 피해 표시용).

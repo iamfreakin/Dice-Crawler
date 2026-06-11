@@ -112,6 +112,8 @@ res://
       → dealt=실제 HP감소(취약·적방어·HP캡), preview/로그/take_damage 값 통일 (예상=실제 보장)
 - [x] (Phase 3-A 토대) FaceData를 tags + effects(timing) 모델로 전환,
       순수 EffectResolver 도입 + 기존 숫자/속성/토큰 면 .tres 이관(동작 보존 테스트)
+- [x] (Phase 3-B1 증폭) RollEntry 원본 이벤트 → ResolvedRoll 순서 replay 파이프라인,
+      AFTER_ROLL 증폭(직전 결과 +2), 과거 리롤 재계산, 스킬 주사위 증폭 면 연결
 - [~] 비주얼 패스 (진행 중) — 화풍 픽셀아트, 에셋 전부 수령(assets/sprites)
       - [x] 코드 전역 테마(UITheme) + 다크 배경
       - [x] 픽셀 에셋 연결 1: 화면 배경, 적/플레이어 스프라이트, 의도 아이콘(32)

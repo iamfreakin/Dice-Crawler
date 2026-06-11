@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git --version)"
+      "Bash(git --version)",
+      "Bash(where godot *)",
+      "Bash(where Godot_v4*)",
+      "Read(//c/Program Files/**)",
+      "Bash(echo \"exit:$?\")"
     ]
   }
 }

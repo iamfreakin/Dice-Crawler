@@ -36,8 +36,8 @@ func _init() -> void:
 	_check(curse.token_gain == 1 and curse.logs.size() == 1, "저주 면 토큰/로그")
 	var reroll := _resolve(skill, skill.faces[4])
 	_check(reroll.token_gain == 1 and reroll.logs.size() == 1, "리롤 면 토큰/로그")
-	var number := _resolve(skill, skill.faces[5])
-	_check(number.damage == 2, "스킬 숫자 면 피해")
+	var amplify := _resolve(skill, skill.faces[5])
+	_check(amplify.damage == 0 and amplify.block == 0, "증폭 면 단독 확정 효과 없음")
 
 	var fire_synergy := _resolve_pair(skill, 0.01)
 	_check(fire_synergy.damage == 6 and fire_synergy.burn == 7, "불 태그 시너지")
@@ -58,7 +58,8 @@ func _init() -> void:
 
 func _resolve(die: DiceData, face: FaceData) -> BattleOutcome:
 	var outcome := BattleOutcome.new()
-	EffectResolver.resolve_face(die, face, FaceEffectData.Timing.ON_CONFIRM, outcome)
+	var resolved := ResolvedRoll.new(0, 0, die, face)
+	EffectResolver.resolve_confirm(resolved, outcome)
 	return outcome
 
 

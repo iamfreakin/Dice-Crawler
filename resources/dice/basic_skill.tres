@@ -73,17 +73,19 @@ effects = [SubResource("Effect_skl_reroll_token")]
 value = 0
 label = "🔄"
 
-[sub_resource type="Resource" id="Effect_skl_num_damage"]
+[sub_resource type="Resource" id="Effect_skl_amplify"]
 script = ExtResource("3_effect")
-use_face_value = true
-
-[sub_resource type="Resource" id="Face_skl_num"]
-script = ExtResource("1_face")
-kind = 0
-tags = Array[int]([0])
-effects = [SubResource("Effect_skl_num_damage")]
+effect_type = 4
+timing = 2
 value = 2
-label = "2"
+
+[sub_resource type="Resource" id="Face_skl_amplify"]
+script = ExtResource("1_face")
+kind = 6
+tags = Array[int]([6])
+effects = [SubResource("Effect_skl_amplify")]
+value = 0
+label = "+2"
 
 [resource]
 script = ExtResource("2_dice")
@@ -91,4 +93,4 @@ id = &"basic_skill"
 display_name = "스킬"
 dice_type = 2
 energy_cost = 2
-faces = [SubResource("Face_skl_fire"), SubResource("Face_skl_ice"), SubResource("Face_skl_light"), SubResource("Face_skl_curse"), SubResource("Face_skl_reroll"), SubResource("Face_skl_num")]
+faces = [SubResource("Face_skl_fire"), SubResource("Face_skl_ice"), SubResource("Face_skl_light"), SubResource("Face_skl_curse"), SubResource("Face_skl_reroll"), SubResource("Face_skl_amplify")]
