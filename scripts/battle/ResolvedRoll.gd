@@ -15,6 +15,9 @@ var copy_depth: int = 0
 var source_entry_id: int = -1
 var modified_by_entry_ids: Array[int] = []
 
+## 보존되어 지난 턴에서 이번 턴으로 넘어온 결과(TURN_START 복원). 핸드 슬롯 없음.
+var preserved: bool = false
+
 
 func _init(
 	p_entry_id: int,
@@ -61,3 +64,14 @@ static func new_copy(source: ResolvedRoll, by_entry_id: int) -> ResolvedRoll:
 	copy.source_entry_id = source.entry_id
 	copy.modified_by_entry_ids.append(by_entry_id)
 	return copy
+
+
+## 보존: 현재 (보정·변환 반영된) 결과를 다음 턴으로 넘길 고정 스냅샷으로 만든다.
+## 핸드 슬롯은 없음(hand_index = -1). 매 replay마다 다시 복제해 원본 스냅샷을 보호한다.
+func snapshot() -> ResolvedRoll:
+	var snap := ResolvedRoll.new(entry_id, -1, die, face)
+	snap.value = value
+	snap.tags = tags.duplicate()
+	snap.preserved = true
+	snap.source_entry_id = source_entry_id
+	return snap

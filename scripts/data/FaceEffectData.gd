@@ -21,6 +21,7 @@ enum EffectType {
 	PREHEAT_NEXT,
 	TRANSFORM_PREVIOUS,
 	DUPLICATE_PREVIOUS,
+	PRESERVE_PREVIOUS,
 }
 
 @export var effect_type: EffectType = EffectType.DAMAGE

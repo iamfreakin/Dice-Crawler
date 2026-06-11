@@ -122,6 +122,10 @@ res://
 - [x] (Phase 3-B4 복제) 직전 결과를 복사해 파생 굴림 추가 — AFTER_ROLL,
       ResolvedRoll.new_copy(generated/copy_depth, 핸드 슬롯 공유=팬텀), 피해·화상·시너지 2배,
       과거 리롤 재계산, 조작 주사위 숫자 면 → 복제 면 교체
+- [x] (Phase 3-B5 보존) 결과를 다음 턴까지 유지 — 턴 넘김(_preserved),
+      TURN_END 지정(_capture_preserved) / TURN_START 복원(preview_rolls 맨 앞), 상한 1·한 턴 만료,
+      복원 결과를 이번 턴 증폭/시너지 대상으로 사용, 보존 결과 읽기전용 칩 표시
+      → Phase 3-B(조작 면 MVP 5종) 완료. 다음은 Phase 3-C 면 조각 UI
 - [~] 비주얼 패스 (진행 중) — 화풍 픽셀아트, 에셋 전부 수령(assets/sprites)
       - [x] 코드 전역 테마(UITheme) + 다크 배경
       - [x] 픽셀 에셋 연결 1: 화면 배경, 적/플레이어 스프라이트, 의도 아이콘(32)

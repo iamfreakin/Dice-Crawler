@@ -19,6 +19,7 @@ enum FaceKind {
 	PREHEAT,  # 다음에 굴릴 주사위 결과 값 강화 (굴림 시점 pending)
 	TRANSFORM,# 직전 굴림 결과의 속성을 바꿔 시너지 완성
 	DUPLICATE,# 직전 굴림 결과를 복사해 파생 굴림 하나 추가
+	PRESERVE, # 직전 굴림 결과를 다음 턴까지 유지 (턴 넘김)
 }
 
 @export var id: StringName              ## 고유 식별자 (예: &"basic_attack")

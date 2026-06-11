@@ -32,19 +32,18 @@ effects = [SubResource("Effect_mnp_to_ice")]
 value = 0
 label = "→❄️"
 
-[sub_resource type="Resource" id="Effect_mnp_to_light"]
+[sub_resource type="Resource" id="Effect_mnp_preserve"]
 script = ExtResource("3_effect")
-effect_type = 6
-timing = 2
-element = 3
+effect_type = 8
+timing = 5
 
-[sub_resource type="Resource" id="Face_mnp_to_light"]
+[sub_resource type="Resource" id="Face_mnp_preserve"]
 script = ExtResource("1_face")
-kind = 8
-tags = Array[int]([8])
-effects = [SubResource("Effect_mnp_to_light")]
+kind = 10
+tags = Array[int]([10])
+effects = [SubResource("Effect_mnp_preserve")]
 value = 0
-label = "→⚡"
+label = "보존"
 
 [sub_resource type="Resource" id="Effect_mnp_amplify"]
 script = ExtResource("3_effect")
@@ -93,4 +92,4 @@ id = &"manip_die"
 display_name = "조작"
 dice_type = 3
 energy_cost = 1
-faces = [SubResource("Face_mnp_to_fire"), SubResource("Face_mnp_to_ice"), SubResource("Face_mnp_to_light"), SubResource("Face_mnp_amplify"), SubResource("Face_mnp_preheat"), SubResource("Face_mnp_duplicate")]
+faces = [SubResource("Face_mnp_to_fire"), SubResource("Face_mnp_to_ice"), SubResource("Face_mnp_preserve"), SubResource("Face_mnp_amplify"), SubResource("Face_mnp_preheat"), SubResource("Face_mnp_duplicate")]

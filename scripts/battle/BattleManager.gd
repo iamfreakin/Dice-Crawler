@@ -13,6 +13,7 @@ enum State { DRAW, PLAYER_TURN, RESOLVE, ENEMY_TURN, REWARD }
 
 const DRAW_COUNT: int = 5   # 핸드로 뽑는 장수
 const MAX_ENERGY: int = 3   # 매 턴 에너지
+const PRESERVE_CAP: int = 1 # 보존으로 다음 턴까지 넘길 수 있는 결과 상한 (밸런스 튜닝값)
 
 var _state: State = State.DRAW
 var _enemies: Array[EnemyInstance] = []
@@ -24,12 +25,14 @@ var _draw_pile: Array[DiceData] = []
 var _discard_pile: Array[DiceData] = []
 var _hand: Array[DiceData] = []
 var _context: RollContext = RollContext.new()  # 이번 턴 굴림 이벤트 로그
+var _preserved: Array[ResolvedRoll] = []  # 지난 턴에서 보존되어 이번 턴 맨 앞에 복원될 결과
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()  # Combat 시드 RNG
 
 
 func start_battle(enemy_defs: Array[EnemyData]) -> void:
 	_enemies.clear()
 	target_index = 0
+	_preserved.clear()
 	_rng.randomize()
 	for def in enemy_defs:
 		_enemies.append(EnemyInstance.new(def))
@@ -157,6 +160,7 @@ func _do_resolve() -> void:
 	var target := current_target()
 	var outcome := _compute_outcome(target)
 	_apply_outcome(outcome, target)
+	_capture_preserved()  # 이번 턴 보존 표시를 다음 턴 _preserved로 확정 (TURN_END)
 
 	for d in _hand:
 		_discard_pile.append(d)
@@ -212,6 +216,10 @@ func preview_rolls() -> Array[ResolvedRoll]:
 	var rolls: Array[ResolvedRoll] = []
 	var pending_bonus: int = 0   # 예열 등으로 다음 굴림에 걸린 보정값
 	var pending_source: int = -1 # 그 보정을 건 항목 entry_id
+	# TURN_START 복원: 지난 턴에서 보존된 결과를 맨 앞에 둔다(이번 턴 굴림과 콤보/시너지).
+	# 매번 다시 스냅샷해 저장본을 이번 턴 효과로부터 보호한다.
+	for kept in _preserved:
+		rolls.append(kept.snapshot())
 	for entry in _context.entries:
 		var face := entry.select_face()
 		var resolved := ResolvedRoll.new(entry.entry_id, entry.index, entry.die, face)
@@ -227,6 +235,36 @@ func preview_rolls() -> Array[ResolvedRoll]:
 			pending_bonus = next_bonus
 			pending_source = resolved.entry_id
 	return rolls
+
+
+## TURN_END: 이번 턴 결과 중 보존 면이 가리킨 직전 결과를 다음 턴 _preserved로 확정한다.
+## 매 턴 새로 계산하므로 다시 보존하지 않은 결과는 자동으로 만료된다(한 턴만 유지).
+func _capture_preserved() -> void:
+	var rolls := preview_rolls()
+	var kept: Array[ResolvedRoll] = []
+	for i in rolls.size():
+		if i >= 1 and _is_preserve_face(rolls[i].face):
+			kept.append(rolls[i - 1].snapshot())
+			if kept.size() >= PRESERVE_CAP:
+				break
+	_preserved = kept
+
+
+func _is_preserve_face(face: FaceData) -> bool:
+	if face == null:
+		return false
+	for effect in face.effects:
+		if effect != null and effect.effect_type == FaceEffectData.EffectType.PRESERVE_PREVIOUS:
+			return true
+	return false
+
+
+## 지난 턴에서 보존되어 이번 턴 맨 앞에 복원된 결과들 (UI 표시용, 읽기 전용).
+func get_preserved() -> Array[ResolvedRoll]:
+	var out: Array[ResolvedRoll] = []
+	for kept in _preserved:
+		out.append(kept.snapshot())
+	return out
 
 
 ## 미리보기: 적용하지 않고 현재 타겟 기준 정산값만 반환 (Phase 2 예상 피해 표시용).

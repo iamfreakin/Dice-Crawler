@@ -154,6 +154,10 @@ func _render_hand() -> void:
 	_hand_label.text = "주사위 클릭=굴림(에너지)  ·  굴린 주사위의 리롤 버튼=재굴림(토큰)  ·  에너지 %d/%d  토큰 %d" % [
 		_bm.energy if _bm else 0, BattleManager.MAX_ENERGY, GameManager.reroll_tokens
 	]
+	# 지난 턴에서 넘어온 보존 결과를 핸드 앞에 읽기 전용 칩으로 표시한다.
+	if _bm:
+		for kept in _bm.get_preserved():
+			_dice_box.add_child(_preserved_chip(kept))
 	for i in _hand.size():
 		_dice_box.add_child(_dice_chip(i))
 
@@ -178,6 +182,21 @@ func _dice_chip(index: int) -> Control:
 					_bm.roll_index(index))
 		else:
 			box.modulate = Color(0.45, 0.45, 0.5)  # 에너지 부족
+	return box
+
+
+## 보존된 결과 칩 (읽기 전용, 흐리게 + "보존" 표식). 주사위 슬롯이 아니라 결과 스냅샷이다.
+func _preserved_chip(resolved: ResolvedRoll) -> Control:
+	var box := _dice_base(resolved.die)
+	box.modulate = Color(1, 1, 1, 0.6)
+	_overlay_face(box, resolved)
+	var tag := _face_label("보존", 11)
+	tag.position = Vector2(0, 0)
+	tag.size = Vector2(DICE_BOX, 16)
+	tag.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	tag.add_theme_color_override("font_color", Color("7f77dd"))
+	box.add_child(tag)
+	box.tooltip_text = "보존된 결과 — 지난 턴에서 유지됨"
 	return box
 
 
@@ -245,6 +264,8 @@ func _overlay_face(box: Control, resolved: ResolvedRoll) -> void:
 		box.tooltip_text = "변환: 직전 굴림을 %s 속성으로 (시너지 완성용)" % _transform_target_text(face)
 	elif face.kind == DiceData.FaceKind.DUPLICATE:
 		box.tooltip_text = "복제: 직전 굴림 결과를 하나 더 (피해·시너지 2배)"
+	elif face.kind == DiceData.FaceKind.PRESERVE:
+		box.tooltip_text = "보존: 직전 굴림 결과를 다음 턴까지 유지"
 	# 값이 변형된 굴림(증폭/예열 등으로 보정된 결과)에는 보정 배지를 띄운다.
 	if resolved.value != face.value:
 		var delta := resolved.value - face.value
@@ -311,6 +332,7 @@ func _face_name(kind: DiceData.FaceKind) -> String:
 		DiceData.FaceKind.PREHEAT: return "preheat"
 		DiceData.FaceKind.TRANSFORM: return "transform"
 		DiceData.FaceKind.DUPLICATE: return "duplicate"
+		DiceData.FaceKind.PRESERVE: return "preserve"
 	return ""
 
 

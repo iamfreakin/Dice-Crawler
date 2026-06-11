@@ -95,6 +95,7 @@
   - 참고: 변환 면 3종(🔥/❄️/⚡)은 코드상 모두 `kind=TRANSFORM` → 같은 `transform.png` 사용.
     면에서 목표 속성 구분이 필요하면 속성 색으로 틴트한 3종(`transform_fire/ice/lightning.png`)으로 분리 검토.
 - `duplicate.png` — 복제(겹친 사각형/＋1 모티프), 청록/에메랄드 계열 `[미수령]`
+- `preserve.png` — 보존(자물쇠/모래시계/＋다음 턴 모티프), 보라(#7f77dd) `[미수령]`
 
 ---
 

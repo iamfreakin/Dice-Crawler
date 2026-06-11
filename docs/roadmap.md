@@ -28,7 +28,7 @@
 ### Phase 3 — 정체성: 면 조각 + 조작/연쇄 ⭐
 - `[완료]` **Phase 3-A**: `FaceData(tags + effects)` + `FaceEffectData(timing)` +
   순수 `EffectResolver` 도입, 기존 면 전체 데이터 이관(전투 동작 보존).
-- `[진행]` **Phase 3-B**: 조작 면을 **증폭 → 예열 → 변환 → 복제 → 보존** 순서로 추가.
+- `[완료]` **Phase 3-B**: 조작 면 **증폭 → 예열 → 변환 → 복제 → 보존** 전부 구현 (MVP 5종 완료).
   - `[완료]` 3-B1 증폭: `ResolvedRoll` 순서 replay + 직전 결과 `+2` + 과거 리롤 재계산
   - `[완료]` 3-B2 예열: AFTER_ROLL 생성 → BEFORE_ROLL 소비 pending(`다음 굴림 +2`),
     예열+증폭 동시 적용·비누적·과거 리롤 재계산 (스킬 주사위 리롤 면 → 예열 면 교체)
@@ -37,7 +37,10 @@
   - `[완료]` 3-B4 복제: 직전 결과(보정·변환 반영)를 복사해 파생 굴림 추가(AFTER_ROLL),
     `ResolvedRoll.new_copy`(generated/copy_depth), 화상·시너지 2배·과거 리롤 재계산.
     조작 주사위 숫자 면 → 복제 면 교체(완전 조작 테마)
-  - `[다음]` 3-B5 보존: 결과를 다음 턴까지 유지(턴 넘김, 1~2개 상한) — TURN_END 지정 / TURN_START 복원
+  - `[완료]` 3-B5 보존: 결과를 다음 턴까지 유지 — TURN_END 지정(_capture_preserved) /
+    TURN_START 복원(preview_rolls 맨 앞 prepend), 상한 1·한 턴 만료·복원 결과 증폭 가능.
+    조작 주사위 변환⚡ 면 → 보존 면 교체(변환은 🔥❄️ 2종 유지)
+  - `[다음]` Phase 3-C로 진행: 면 조각 UI(주사위 선택 → 면 선택 → 적용)
 - `[이후]` **Phase 3-C**: "주사위 선택 → 면 선택 → 적용" 면 조각 UI.
 - 조각 모디파이어 `ENHANCE / REPLACE`(EXPAND는 후순위) + "주사위 선택 → 면 선택 → 적용" UI(보상/상점/휴식 공유)
 - 면 효과를 데이터/전략 + `timing` 필드로 분리(enum+분기 탈피)
