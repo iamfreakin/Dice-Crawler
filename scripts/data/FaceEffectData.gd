@@ -18,6 +18,7 @@ enum EffectType {
 	APPLY_BURN,
 	GAIN_REROLL,
 	AMPLIFY_PREVIOUS,
+	PREHEAT_NEXT,
 }
 
 @export var effect_type: EffectType = EffectType.DAMAGE

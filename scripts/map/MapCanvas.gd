@@ -99,11 +99,11 @@ func _make_node(node: MapNode) -> Control:
 
 ## 박스 중앙에 텍스처를 정수 좌표로 배치.
 func _centered_tex(t: Texture2D) -> TextureRect:
-	var tr := TextureRect.new()
-	tr.texture = t
-	tr.position = ((Vector2(_box, _box) - t.get_size()) * 0.5).round()
-	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return tr
+	var rect := TextureRect.new()
+	rect.texture = t
+	rect.position = ((Vector2(_box, _box) - t.get_size()) * 0.5).round()
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rect
 
 func _icon_for(type: int) -> Texture2D:
 	match type:

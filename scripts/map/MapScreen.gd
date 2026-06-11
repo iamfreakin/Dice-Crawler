@@ -69,13 +69,13 @@ func _update_status() -> void:
 		var tex := load("res://assets/sprites/relics/%s.png" % r.id) as Texture2D
 		if tex == null:
 			continue
-		var tr := TextureRect.new()
-		tr.texture = tex
-		tr.custom_minimum_size = Vector2(RELIC_ICON, RELIC_ICON)
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.tooltip_text = "%s — %s" % [r.display_name, r.description]
-		_relic_box.add_child(tr)
+		var rect := TextureRect.new()
+		rect.texture = tex
+		rect.custom_minimum_size = Vector2(RELIC_ICON, RELIC_ICON)
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.tooltip_text = "%s — %s" % [r.display_name, r.description]
+		_relic_box.add_child(rect)
 
 
 func _on_node_selected(node: MapNode) -> void:

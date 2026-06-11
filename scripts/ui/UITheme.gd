@@ -26,13 +26,13 @@ static func add_background(parent: Control, path: String) -> void:
 	var tex := load(path) as Texture2D
 	if tex == null:
 		return
-	var tr := TextureRect.new()
-	tr.texture = tex
-	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
-	tr.stretch_mode = TextureRect.STRETCH_SCALE
-	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(tr)
-	parent.move_child(tr, 0)
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rect.stretch_mode = TextureRect.STRETCH_SCALE
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(rect)
+	parent.move_child(rect, 0)
 
 static func _btn_style(bg: Color, border: Color) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()

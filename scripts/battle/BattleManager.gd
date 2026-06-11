@@ -210,11 +210,22 @@ func _compute_outcome(target: EnemyInstance) -> BattleOutcome:
 ## 호출할 때마다 새 객체를 만들며 RollEntry/FaceData를 수정하지 않는다.
 func preview_rolls() -> Array[ResolvedRoll]:
 	var rolls: Array[ResolvedRoll] = []
+	var pending_bonus: int = 0   # 예열 등으로 다음 굴림에 걸린 보정값
+	var pending_source: int = -1 # 그 보정을 건 항목 entry_id
 	for entry in _context.entries:
 		var face := entry.select_face()
 		var resolved := ResolvedRoll.new(entry.entry_id, entry.index, entry.die, face)
+		# BEFORE_ROLL: 직전에 생성된 예열 pending을 이 굴림이 소비한다.
+		if pending_bonus != 0:
+			resolved.modify_value(pending_bonus, pending_source)
+			pending_bonus = 0
+			pending_source = -1
 		rolls.append(resolved)
-		EffectResolver.resolve_after_roll(rolls)
+		# AFTER_ROLL: 증폭(직전 보정) 처리 + 예열 생성(다음에 걸 보정값) 회수.
+		var next_bonus := EffectResolver.resolve_after_roll(rolls)
+		if next_bonus != 0:
+			pending_bonus = next_bonus
+			pending_source = resolved.entry_id
 	return rolls
 
 

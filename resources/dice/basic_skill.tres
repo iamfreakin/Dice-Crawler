@@ -59,19 +59,19 @@ effects = [SubResource("Effect_skl_curse_token")]
 value = 0
 label = "💀"
 
-[sub_resource type="Resource" id="Effect_skl_reroll_token"]
+[sub_resource type="Resource" id="Effect_skl_preheat"]
 script = ExtResource("3_effect")
-effect_type = 3
-value = 1
-log_text = "리롤 면: 리롤 토큰 +1"
+effect_type = 5
+timing = 2
+value = 2
 
-[sub_resource type="Resource" id="Face_skl_reroll"]
+[sub_resource type="Resource" id="Face_skl_preheat"]
 script = ExtResource("1_face")
-kind = 5
-tags = Array[int]([5])
-effects = [SubResource("Effect_skl_reroll_token")]
+kind = 7
+tags = Array[int]([7])
+effects = [SubResource("Effect_skl_preheat")]
 value = 0
-label = "🔄"
+label = "▶+2"
 
 [sub_resource type="Resource" id="Effect_skl_amplify"]
 script = ExtResource("3_effect")
@@ -93,4 +93,4 @@ id = &"basic_skill"
 display_name = "스킬"
 dice_type = 2
 energy_cost = 2
-faces = [SubResource("Face_skl_fire"), SubResource("Face_skl_ice"), SubResource("Face_skl_light"), SubResource("Face_skl_curse"), SubResource("Face_skl_reroll"), SubResource("Face_skl_amplify")]
+faces = [SubResource("Face_skl_fire"), SubResource("Face_skl_ice"), SubResource("Face_skl_light"), SubResource("Face_skl_curse"), SubResource("Face_skl_preheat"), SubResource("Face_skl_amplify")]

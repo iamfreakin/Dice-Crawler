@@ -13,7 +13,7 @@ static func load_dir(dir_path: String) -> Array:
 	files.sort()
 	for f in files:
 		if f.ends_with(".tres") or f.ends_with(".res"):
-			var res := load(dir_path.path_join(f))
+			var res: Resource = load(dir_path.path_join(f))
 			if res != null:
 				result.append(res)
 			else:
@@ -22,7 +22,7 @@ static func load_dir(dir_path: String) -> Array:
 
 ## 단일 리소스 로드 (실패 시 경고 후 null).
 static func load_one(path: String) -> Resource:
-	var res := load(path)
+	var res: Resource = load(path)
 	if res == null:
 		push_warning("Content.load_one: 로드 실패 — " + path)
 	return res

@@ -34,8 +34,8 @@ func _init() -> void:
 	)
 	var curse := _resolve(skill, skill.faces[3])
 	_check(curse.token_gain == 1 and curse.logs.size() == 1, "저주 면 토큰/로그")
-	var reroll := _resolve(skill, skill.faces[4])
-	_check(reroll.token_gain == 1 and reroll.logs.size() == 1, "리롤 면 토큰/로그")
+	var preheat := _resolve(skill, skill.faces[4])
+	_check(preheat.damage == 0 and preheat.block == 0, "예열 면 단독 확정 효과 없음")
 	var amplify := _resolve(skill, skill.faces[5])
 	_check(amplify.damage == 0 and amplify.block == 0, "증폭 면 단독 확정 효과 없음")
 

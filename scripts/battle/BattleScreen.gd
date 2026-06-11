@@ -232,13 +232,16 @@ func _overlay_face(box: Control, resolved: ResolvedRoll) -> void:
 		box.add_child(_face_label(str(resolved.value), 30))
 	else:
 		var path := "res://assets/sprites/faces/%s.png" % _face_name(face.kind)
-		var ftex := load(path) as Texture2D if ResourceLoader.exists(path) else null
+		var ftex: Texture2D = load(path) as Texture2D if ResourceLoader.exists(path) else null
 		if ftex != null:
 			box.add_child(_centered(ftex))
 		else:
 			box.add_child(_face_label(face.label, 20))
 	if face.kind == DiceData.FaceKind.AMPLIFY:
 		box.tooltip_text = "증폭: 직전 굴림 결과 +2"
+	elif face.kind == DiceData.FaceKind.PREHEAT:
+		box.tooltip_text = "예열: 다음에 굴릴 주사위 결과 +2"
+	# 값이 변형된 굴림(증폭/예열 등으로 보정된 결과)에는 보정 배지를 띄운다.
 	if resolved.value != face.value:
 		var delta := resolved.value - face.value
 		var badge := _face_label("%+d" % delta, 13)
@@ -246,7 +249,7 @@ func _overlay_face(box: Control, resolved: ResolvedRoll) -> void:
 		badge.size = Vector2(28, 18)
 		badge.add_theme_color_override("font_color", Color("efc127"))
 		box.add_child(badge)
-		box.tooltip_text = "증폭: %d → %d" % [face.value, resolved.value]
+		box.tooltip_text = "보정: %d → %d (%+d)" % [face.value, resolved.value, delta]
 
 
 func _face_label(text: String, font_size: int) -> Label:
@@ -278,11 +281,11 @@ func _cost_badge(cost: int) -> Control:
 
 
 func _centered(tex: Texture2D) -> TextureRect:
-	var tr := TextureRect.new()
-	tr.texture = tex
-	tr.position = ((Vector2(DICE_BOX, DICE_BOX) - tex.get_size()) * 0.5).round()
-	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return tr
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.position = ((Vector2(DICE_BOX, DICE_BOX) - tex.get_size()) * 0.5).round()
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rect
 
 
 func _face_name(kind: DiceData.FaceKind) -> String:
@@ -293,6 +296,7 @@ func _face_name(kind: DiceData.FaceKind) -> String:
 		DiceData.FaceKind.CURSE: return "curse"
 		DiceData.FaceKind.REROLL: return "reroll"
 		DiceData.FaceKind.AMPLIFY: return "amplify"
+		DiceData.FaceKind.PREHEAT: return "preheat"
 	return ""
 
 
@@ -417,15 +421,15 @@ func _make_enemy_sprite(e: EnemyInstance) -> TextureRect:
 	var tex := load("res://assets/sprites/enemies/%s.png" % e.data.id) as Texture2D
 	if tex == null:
 		return null
-	var tr := TextureRect.new()
-	tr.texture = tex
+	var rect := TextureRect.new()
+	rect.texture = tex
 	var scale := minf(ENEMY_SCALE, ENEMY_MAX_H / tex.get_size().y)
-	tr.custom_minimum_size = tex.get_size() * scale
-	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	tr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	rect.custom_minimum_size = tex.get_size() * scale
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	if e.is_dead():
-		tr.modulate = Color(0.35, 0.35, 0.4, 0.5)
-	return tr
+		rect.modulate = Color(0.35, 0.35, 0.4, 0.5)
+	return rect
 
 
 func _make_intent_row(intent: IntentData, net_hp: int = -1) -> HBoxContainer:
@@ -450,11 +454,11 @@ func _make_intent_icon(intent: IntentData) -> TextureRect:
 	var tex := load("res://assets/sprites/intents/%s.png" % _intent_kind_name(intent.kind)) as Texture2D
 	if tex == null:
 		return null
-	var tr := TextureRect.new()
-	tr.texture = tex
-	tr.custom_minimum_size = Vector2(INTENT_ICON, INTENT_ICON)
-	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	return tr
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.custom_minimum_size = Vector2(INTENT_ICON, INTENT_ICON)
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	return rect
 
 
 func _intent_kind_name(kind: IntentData.IntentKind) -> String:

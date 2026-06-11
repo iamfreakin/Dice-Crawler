@@ -16,6 +16,7 @@ enum FaceKind {
 	CURSE,    # 💀 저주 (굴리면 리롤 토큰 보너스)
 	REROLL,   # 🔄
 	AMPLIFY,  # 직전 굴림 결과 값 강화
+	PREHEAT,  # 다음에 굴릴 주사위 결과 값 강화 (굴림 시점 pending)
 }
 
 @export var id: StringName              ## 고유 식별자 (예: &"basic_attack")
