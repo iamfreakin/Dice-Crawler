@@ -19,6 +19,7 @@ enum EffectType {
 	GAIN_REROLL,
 	AMPLIFY_PREVIOUS,
 	PREHEAT_NEXT,
+	TRANSFORM_PREVIOUS,
 }
 
 @export var effect_type: EffectType = EffectType.DAMAGE
@@ -26,6 +27,8 @@ enum EffectType {
 @export var value: int = 0
 ## 숫자 면 강화처럼 FaceData.value를 따라가야 하는 효과에 사용한다.
 @export var use_face_value: bool = false
+## TRANSFORM_PREVIOUS 가 직전 결과를 바꿀 목표 속성 (FIRE/ICE/LIGHTNING).
+@export var element: DiceData.FaceKind = DiceData.FaceKind.NUMBER
 @export_multiline var log_text: String = ""
 
 

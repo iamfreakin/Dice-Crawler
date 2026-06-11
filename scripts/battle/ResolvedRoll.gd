@@ -41,3 +41,10 @@ func has_tag(tag: DiceData.FaceKind) -> bool:
 func modify_value(amount: int, source_id: int) -> void:
 	value += amount
 	modified_by_entry_ids.append(source_id)
+
+
+## 변환: 시너지 판정 태그를 목표 속성으로 교체한다. 값/효과는 그대로 둔다.
+func convert_to(tag: DiceData.FaceKind, source_id: int) -> void:
+	tags.clear()
+	tags.append(tag)
+	modified_by_entry_ids.append(source_id)

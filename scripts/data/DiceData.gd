@@ -4,7 +4,7 @@ extends Resource
 ## 콘텐츠는 이 클래스를 상속하지 말고 res://resources/dice/*.tres 로 추가한다.
 
 ## 주사위 속성(타입). 시너지 판정의 기준이 된다.
-enum DiceType { ATTACK, DEFENSE, SKILL }
+enum DiceType { ATTACK, DEFENSE, SKILL, MANIPULATION }
 
 ## 면의 대표 태그. UI 아이콘과 기존 시너지 식별에 사용한다.
 ## 실제 행동은 FaceData.effects의 FaceEffectData가 정의한다.
@@ -17,6 +17,7 @@ enum FaceKind {
 	REROLL,   # 🔄
 	AMPLIFY,  # 직전 굴림 결과 값 강화
 	PREHEAT,  # 다음에 굴릴 주사위 결과 값 강화 (굴림 시점 pending)
+	TRANSFORM,# 직전 굴림 결과의 속성을 바꿔 시너지 완성
 }
 
 @export var id: StringName              ## 고유 식별자 (예: &"basic_attack")

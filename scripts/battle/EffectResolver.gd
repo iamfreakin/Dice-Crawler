@@ -23,6 +23,11 @@ static func resolve_after_roll(rolls: Array[ResolvedRoll]) -> int:
 					continue
 				var previous: ResolvedRoll = rolls[rolls.size() - 2]
 				previous.modify_value(effect.amount(current.value), current.entry_id)
+			FaceEffectData.EffectType.TRANSFORM_PREVIOUS:
+				if rolls.size() < 2:
+					continue
+				var prev: ResolvedRoll = rolls[rolls.size() - 2]
+				prev.convert_to(effect.element, current.entry_id)
 			FaceEffectData.EffectType.PREHEAT_NEXT:
 				next_bonus += effect.amount(current.value)
 	return next_bonus

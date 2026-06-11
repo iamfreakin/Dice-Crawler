@@ -241,6 +241,8 @@ func _overlay_face(box: Control, resolved: ResolvedRoll) -> void:
 		box.tooltip_text = "증폭: 직전 굴림 결과 +2"
 	elif face.kind == DiceData.FaceKind.PREHEAT:
 		box.tooltip_text = "예열: 다음에 굴릴 주사위 결과 +2"
+	elif face.kind == DiceData.FaceKind.TRANSFORM:
+		box.tooltip_text = "변환: 직전 굴림을 %s 속성으로 (시너지 완성용)" % _transform_target_text(face)
 	# 값이 변형된 굴림(증폭/예열 등으로 보정된 결과)에는 보정 배지를 띄운다.
 	if resolved.value != face.value:
 		var delta := resolved.value - face.value
@@ -250,6 +252,14 @@ func _overlay_face(box: Control, resolved: ResolvedRoll) -> void:
 		badge.add_theme_color_override("font_color", Color("efc127"))
 		box.add_child(badge)
 		box.tooltip_text = "보정: %d → %d (%+d)" % [face.value, resolved.value, delta]
+	# 변환된 굴림(속성 태그가 면 본래 태그와 달라짐)에는 바뀐 속성 표식을 띄운다.
+	elif resolved.tags != face.tags and not resolved.tags.is_empty():
+		var elem: DiceData.FaceKind = resolved.tags[0]
+		var marker := _face_label(_element_emoji(elem), 13)
+		marker.position = Vector2(DICE_BOX - 20, DICE_BOX - 21)
+		marker.size = Vector2(18, 18)
+		box.add_child(marker)
+		box.tooltip_text = "변환됨: %s 속성" % _element_emoji(elem)
 
 
 func _face_label(text: String, font_size: int) -> Label:
@@ -297,7 +307,24 @@ func _face_name(kind: DiceData.FaceKind) -> String:
 		DiceData.FaceKind.REROLL: return "reroll"
 		DiceData.FaceKind.AMPLIFY: return "amplify"
 		DiceData.FaceKind.PREHEAT: return "preheat"
+		DiceData.FaceKind.TRANSFORM: return "transform"
 	return ""
+
+
+func _element_emoji(kind: DiceData.FaceKind) -> String:
+	match kind:
+		DiceData.FaceKind.FIRE: return "🔥"
+		DiceData.FaceKind.ICE: return "❄️"
+		DiceData.FaceKind.LIGHTNING: return "⚡"
+	return "?"
+
+
+## 변환 면이 가리키는 목표 속성을 effects에서 찾아 이모지로 돌려준다.
+func _transform_target_text(face: FaceData) -> String:
+	for effect in face.effects:
+		if effect != null and effect.effect_type == FaceEffectData.EffectType.TRANSFORM_PREVIOUS:
+			return _element_emoji(effect.element)
+	return "속성"
 
 
 # --- 표시 갱신 ----------------------------------------------------------

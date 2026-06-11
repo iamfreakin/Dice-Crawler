@@ -1,0 +1,95 @@
+[gd_resource type="Resource" script_class="DiceData" load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/FaceData.gd" id="1_face"]
+[ext_resource type="Script" path="res://scripts/data/DiceData.gd" id="2_dice"]
+[ext_resource type="Script" path="res://scripts/data/FaceEffectData.gd" id="3_effect"]
+
+[sub_resource type="Resource" id="Effect_mnp_to_fire"]
+script = ExtResource("3_effect")
+effect_type = 6
+timing = 2
+element = 1
+
+[sub_resource type="Resource" id="Face_mnp_to_fire"]
+script = ExtResource("1_face")
+kind = 8
+tags = Array[int]([8])
+effects = [SubResource("Effect_mnp_to_fire")]
+value = 0
+label = "→🔥"
+
+[sub_resource type="Resource" id="Effect_mnp_to_ice"]
+script = ExtResource("3_effect")
+effect_type = 6
+timing = 2
+element = 2
+
+[sub_resource type="Resource" id="Face_mnp_to_ice"]
+script = ExtResource("1_face")
+kind = 8
+tags = Array[int]([8])
+effects = [SubResource("Effect_mnp_to_ice")]
+value = 0
+label = "→❄️"
+
+[sub_resource type="Resource" id="Effect_mnp_to_light"]
+script = ExtResource("3_effect")
+effect_type = 6
+timing = 2
+element = 3
+
+[sub_resource type="Resource" id="Face_mnp_to_light"]
+script = ExtResource("1_face")
+kind = 8
+tags = Array[int]([8])
+effects = [SubResource("Effect_mnp_to_light")]
+value = 0
+label = "→⚡"
+
+[sub_resource type="Resource" id="Effect_mnp_amplify"]
+script = ExtResource("3_effect")
+effect_type = 4
+timing = 2
+value = 2
+
+[sub_resource type="Resource" id="Face_mnp_amplify"]
+script = ExtResource("1_face")
+kind = 6
+tags = Array[int]([6])
+effects = [SubResource("Effect_mnp_amplify")]
+value = 0
+label = "+2"
+
+[sub_resource type="Resource" id="Effect_mnp_preheat"]
+script = ExtResource("3_effect")
+effect_type = 5
+timing = 2
+value = 2
+
+[sub_resource type="Resource" id="Face_mnp_preheat"]
+script = ExtResource("1_face")
+kind = 7
+tags = Array[int]([7])
+effects = [SubResource("Effect_mnp_preheat")]
+value = 0
+label = "▶+2"
+
+[sub_resource type="Resource" id="Effect_mnp_num_damage"]
+script = ExtResource("3_effect")
+use_face_value = true
+
+[sub_resource type="Resource" id="Face_mnp_num"]
+script = ExtResource("1_face")
+kind = 0
+tags = Array[int]([0])
+effects = [SubResource("Effect_mnp_num_damage")]
+value = 2
+label = "2"
+
+[resource]
+script = ExtResource("2_dice")
+id = &"manip_die"
+display_name = "조작"
+dice_type = 3
+energy_cost = 1
+faces = [SubResource("Face_mnp_to_fire"), SubResource("Face_mnp_to_ice"), SubResource("Face_mnp_to_light"), SubResource("Face_mnp_amplify"), SubResource("Face_mnp_preheat"), SubResource("Face_mnp_num")]
