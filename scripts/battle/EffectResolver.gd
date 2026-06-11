@@ -28,6 +28,12 @@ static func resolve_after_roll(rolls: Array[ResolvedRoll]) -> int:
 					continue
 				var prev: ResolvedRoll = rolls[rolls.size() - 2]
 				prev.convert_to(effect.element, current.entry_id)
+			FaceEffectData.EffectType.DUPLICATE_PREVIOUS:
+				if rolls.size() < 2:
+					continue
+				# 직전 결과(보정·변환 반영된 상태)를 복사해 파생 굴림으로 추가한다.
+				var src: ResolvedRoll = rolls[rolls.size() - 2]
+				rolls.append(ResolvedRoll.new_copy(src, current.entry_id))
 			FaceEffectData.EffectType.PREHEAT_NEXT:
 				next_bonus += effect.amount(current.value)
 	return next_bonus

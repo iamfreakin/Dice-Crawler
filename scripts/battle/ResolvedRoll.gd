@@ -48,3 +48,16 @@ func convert_to(tag: DiceData.FaceKind, source_id: int) -> void:
 	tags.clear()
 	tags.append(tag)
 	modified_by_entry_ids.append(source_id)
+
+
+## 복제: source의 (보정 후) 값·태그·면을 그대로 가진 파생 굴림을 만든다.
+## generated=true 로 표시하며, 핸드 슬롯은 source와 공유한다(별도 주사위 칩 없음).
+static func new_copy(source: ResolvedRoll, by_entry_id: int) -> ResolvedRoll:
+	var copy := ResolvedRoll.new(source.entry_id, source.hand_index, source.die, source.face)
+	copy.value = source.value
+	copy.tags = source.tags.duplicate()
+	copy.generated = true
+	copy.copy_depth = source.copy_depth + 1
+	copy.source_entry_id = source.entry_id
+	copy.modified_by_entry_ids.append(by_entry_id)
+	return copy

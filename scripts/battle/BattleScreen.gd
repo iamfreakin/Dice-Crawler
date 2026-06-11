@@ -243,6 +243,8 @@ func _overlay_face(box: Control, resolved: ResolvedRoll) -> void:
 		box.tooltip_text = "예열: 다음에 굴릴 주사위 결과 +2"
 	elif face.kind == DiceData.FaceKind.TRANSFORM:
 		box.tooltip_text = "변환: 직전 굴림을 %s 속성으로 (시너지 완성용)" % _transform_target_text(face)
+	elif face.kind == DiceData.FaceKind.DUPLICATE:
+		box.tooltip_text = "복제: 직전 굴림 결과를 하나 더 (피해·시너지 2배)"
 	# 값이 변형된 굴림(증폭/예열 등으로 보정된 결과)에는 보정 배지를 띄운다.
 	if resolved.value != face.value:
 		var delta := resolved.value - face.value
@@ -308,6 +310,7 @@ func _face_name(kind: DiceData.FaceKind) -> String:
 		DiceData.FaceKind.AMPLIFY: return "amplify"
 		DiceData.FaceKind.PREHEAT: return "preheat"
 		DiceData.FaceKind.TRANSFORM: return "transform"
+		DiceData.FaceKind.DUPLICATE: return "duplicate"
 	return ""
 
 

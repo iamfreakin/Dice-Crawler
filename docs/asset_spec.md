@@ -88,8 +88,13 @@
 - `ice.png` — 눈결정, 시안(#37c4dd)
 - `lightning.png` — 번개, 노랑(#efc127)
 - `curse.png` — 해골, 암보라(#7a3aa0)
-- `reroll.png` — 이중 회전화살표, 보라(#7f77dd)
-- `amplify.png` — 위쪽 화살표/증폭 파동 + `+2`, 노랑(#efc127)
+- `reroll.png` — 이중 회전화살표, 보라(#7f77dd) *(현재 스킬 면엔 미사용 — 예열로 교체됨)*
+- `amplify.png` — 위쪽 화살표/증폭 파동 + `+2`, 노랑(#efc127) `[미수령]`
+- `preheat.png` — 다음 굴림 강화(앞쪽 화살표 ▶ + 잔열/불씨), 주황(#e2503a) `[미수령]`
+- `transform.png` — 속성 변환(순환 화살표 ⟳ + 속성 결정), 청록/에메랄드 계열 `[미수령]`
+  - 참고: 변환 면 3종(🔥/❄️/⚡)은 코드상 모두 `kind=TRANSFORM` → 같은 `transform.png` 사용.
+    면에서 목표 속성 구분이 필요하면 속성 색으로 틴트한 3종(`transform_fire/ice/lightning.png`)으로 분리 검토.
+- `duplicate.png` — 복제(겹친 사각형/＋1 모티프), 청록/에메랄드 계열 `[미수령]`
 
 ---
 
@@ -98,6 +103,8 @@
 - `basic_attack.png` — 빨강주황 몸체
 - `basic_defense.png` — 파랑 몸체
 - `basic_skill.png` — 보라(#7f77dd) 몸체 + 약한 글로우
+- `manip_die.png` — 조작 주사위 몸체. 청록/에메랄드 계열 + 톱니/순환 화살표 모티프
+  (조작·연쇄 정체성), 약한 글로우. `[미수령]` *(없으면 코드 폴백으로 표시)*
 
 ---
 
